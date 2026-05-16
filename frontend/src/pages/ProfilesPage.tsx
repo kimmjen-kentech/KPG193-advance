@@ -14,9 +14,10 @@ import {
 import { AreaChart } from '../components/charts/AreaChart';
 import { LineSeriesChart } from '../components/charts/LineSeriesChart';
 import { FUEL_COLORS_HEX, FUEL_LABELS } from '../lib/constants';
-import { toRounded } from '../utils/decimal';
+import { formatByMode } from '../utils/decimal';
 import { Skeleton } from '../components/ui/Skeleton';
 import { useI18n } from '../hooks/useI18n';
+import { useDecimal } from '../hooks/useDecimal';
 
 const dayToDate = (day: number): string => {
   const d = new Date(2022, 0, 1);
@@ -28,6 +29,7 @@ const MONTH_DAYS = [1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335];
 
 export const ProfilesPage = () => {
   const { t } = useI18n();
+  const { mode: decimalMode } = useDecimal();
   const [day, setDay] = useState(1);
   const [busId, setBusId] = useState<number | null>(null);
 
@@ -224,16 +226,20 @@ export const ProfilesPage = () => {
         title={t.profiles.systemDemand}
         icon={Activity}
         right={
-          peak && (
-            <div className="text-right">
-              <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-fg-subtle">
-                {t.profiles.peak}
-              </div>
-              <div className="font-mono text-sm tabular-nums text-fg">
-                {toRounded(peak.total_exact, 0, { grouping: true })} MW @ {peak.hour}:00
-              </div>
+          <div className="text-right">
+            <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-fg-subtle">
+              {t.profiles.peak}
             </div>
-          )
+            <div className="font-mono text-sm tabular-nums text-fg">
+              {peak ? (
+                <>
+                  {formatByMode(peak.total_exact, decimalMode, { grouping: true })} MW @ {peak.hour}:00
+                </>
+              ) : (
+                <Skeleton className="h-4 w-32" />
+              )}
+            </div>
+          </div>
         }
       >
         <div className="h-64 w-full">

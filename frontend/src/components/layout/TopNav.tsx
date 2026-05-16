@@ -4,6 +4,7 @@ import { Menu, X } from 'lucide-react';
 import { cn } from '../../lib/cn';
 import { ThemeToggle } from '../ThemeToggle';
 import { LocaleToggle } from '../LocaleToggle';
+import { DecimalToggle } from '../DecimalToggle';
 import { useI18n } from '../../hooks/useI18n';
 
 const GithubIcon = ({ size = 14 }: { size?: number }) => (
@@ -76,6 +77,7 @@ export const TopNav = () => {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
+          <span className="hidden sm:inline-flex"><DecimalToggle /></span>
           <LocaleToggle />
           <ThemeToggle />
           <a

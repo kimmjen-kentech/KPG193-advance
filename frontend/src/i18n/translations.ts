@@ -124,7 +124,7 @@ export interface Translation {
 
 const ko: Translation = {
   nav: {
-    index: 'Index',
+    index: '개요',
     network: '네트워크',
     profiles: '프로파일',
     data: '데이터',
@@ -273,7 +273,7 @@ const ko: Translation = {
 
 const en: Translation = {
   nav: {
-    index: 'Index',
+    index: 'Overview',
     network: 'Network',
     profiles: 'Profiles',
     data: 'Data',

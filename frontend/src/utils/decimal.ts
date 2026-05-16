@@ -48,3 +48,16 @@ export const toTruncated = (v: DecimalLike, decimals: number, opts: DisplayOptio
 
 export const isExact = (original: DecimalLike, displayed: DecimalLike): boolean =>
   D(original).equals(D(displayed));
+
+/**
+ * 사용자 선택 표시 모드에 따라 포맷.
+ * 'exact'면 원본 정밀도 유지, 숫자면 그만큼의 자릿수로 반올림.
+ */
+export const formatByMode = (
+  v: DecimalLike,
+  mode: '0' | '1' | '2' | '3' | 'exact',
+  opts: DisplayOptions = {},
+): string => {
+  if (mode === 'exact') return toDisplay(v, opts);
+  return toRounded(v, Number(mode), opts);
+};

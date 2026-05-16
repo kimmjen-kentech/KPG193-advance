@@ -1,17 +1,23 @@
+import { useMemo } from 'react';
 import { Activity, Database, GitBranch, Info, Network, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { KpiCard } from '../components/ui/KpiCard';
 import { SectionHeader } from '../components/ui/SectionHeader';
 import { FUEL_COLORS_HEX, FUEL_LABELS } from '../lib/constants';
-import { D, ratio, sum, toDisplay, toRounded } from '../utils/decimal';
+import { D, ratio, sum, toRounded, formatByMode } from '../utils/decimal';
 import { useQuery } from '../hooks/useQuery';
 import { Skeleton } from '../components/ui/Skeleton';
 import { useI18n } from '../hooks/useI18n';
+import { useDecimal } from '../hooks/useDecimal';
 import {
   overviewKpiSQL,
   generationMixSQL,
+  networkBusesSQL,
+  networkBranchesSQL,
   type OverviewKpi,
   type GenerationMixRow,
+  type NetworkBus,
+  type NetworkBranch,
 } from '../lib/queries';
 
 const MIX_FUEL_ORDER = ['coal', 'lng', 'nuclear', 'solar', 'wind', 'hydro'] as const;
@@ -37,8 +43,30 @@ const Sparkline = () => {
 
 const TopologyCard = () => {
   const { t } = useI18n();
+  const buses = useQuery<NetworkBus>(networkBusesSQL);
+  const branches = useQuery<NetworkBranch>(networkBranchesSQL);
+
+  // 한반도 영역 → SVG viewBox (0-100, 0-100) 정규화
+  const proj = useMemo(() => {
+    if (!buses.data || buses.data.length === 0) return null;
+    const lats = buses.data.map((b) => b.lat);
+    const lngs = buses.data.map((b) => b.lng);
+    const minLat = Math.min(...lats);
+    const maxLat = Math.max(...lats);
+    const minLng = Math.min(...lngs);
+    const maxLng = Math.max(...lngs);
+    const padding = 0.2;
+    return (lat: number, lng: number): [number, number] => [
+      ((lng - minLng) / (maxLng - minLng)) * (100 - padding * 2) + padding,
+      (1 - (lat - minLat) / (maxLat - minLat)) * (100 - padding * 2) + padding,
+    ];
+  }, [buses.data]);
+
   return (
-    <div className="relative aspect-square border border-border bg-bg-subtle p-4">
+    <Link
+      to="/network"
+      className="group relative block aspect-square border border-border bg-bg-subtle p-4 transition-colors hover:border-fg"
+    >
       <div
         className="absolute inset-0 opacity-[0.08]"
         style={{
@@ -46,7 +74,7 @@ const TopologyCard = () => {
           backgroundSize: '18px 18px',
         }}
       />
-      <div className="absolute left-5 top-5 flex items-center gap-2">
+      <div className="absolute left-5 top-5 z-10 flex items-center gap-2">
         <span className="relative flex h-2 w-2">
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-60" />
           <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
@@ -56,25 +84,59 @@ const TopologyCard = () => {
         </span>
       </div>
 
-      <div className="relative z-10 flex h-full flex-col items-center justify-center gap-6">
-        <Network size={96} strokeWidth={0.8} className="opacity-30" />
-        <div className="space-y-1 text-center">
-          <div className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg">
-            Node_Density_Mapped
-          </div>
-          <p className="font-mono text-[10px] uppercase leading-relaxed text-fg-subtle">
-            {t.overview.nodeDensity}
-          </p>
-        </div>
+      <div className="relative z-10 flex h-full items-center justify-center">
+        {proj && buses.data ? (
+          <svg viewBox="0 0 100 100" className="h-full w-full" preserveAspectRatio="xMidYMid meet">
+            {branches.data?.map((br, i) => {
+              const [x1, y1] = proj(br.from_lat, br.from_lng);
+              const [x2, y2] = proj(br.to_lat, br.to_lng);
+              const opacity = br.kv >= 700 ? 0.7 : br.kv >= 300 ? 0.35 : 0.15;
+              return (
+                <line
+                  key={i}
+                  x1={x1}
+                  y1={y1}
+                  x2={x2}
+                  y2={y2}
+                  stroke="currentColor"
+                  strokeWidth={br.kv >= 700 ? 0.25 : 0.15}
+                  opacity={opacity}
+                  className="text-fg"
+                />
+              );
+            })}
+            {buses.data.map((b) => {
+              const [x, y] = proj(b.lat, b.lng);
+              const r = b.kv >= 700 ? 0.7 : b.kv >= 300 ? 0.45 : 0.3;
+              const isAccent = b.kv >= 700;
+              return (
+                <circle
+                  key={b.id}
+                  cx={x}
+                  cy={y}
+                  r={r}
+                  className={isAccent ? 'fill-accent' : 'fill-fg'}
+                  opacity={isAccent ? 0.95 : 0.55}
+                />
+              );
+            })}
+          </svg>
+        ) : (
+          <Skeleton className="h-2/3 w-2/3" />
+        )}
       </div>
 
-      <div className="absolute bottom-5 right-5 text-right">
+      <div className="absolute bottom-5 left-5 z-10 font-mono text-[9px] uppercase tracking-[0.2em] text-fg-subtle">
+        {t.overview.nodeDensity}
+      </div>
+
+      <div className="absolute bottom-5 right-5 z-10 text-right">
         <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-fg-subtle">
           {t.overview.frequency}
         </div>
         <div className="font-mono text-sm font-bold text-accent tabular-nums">60.00 Hz</div>
       </div>
-    </div>
+    </Link>
   );
 };
 
@@ -136,6 +198,7 @@ const ErrorBanner = ({ message }: { message: string }) => {
 
 const KpiBar = ({ kpi }: { kpi: OverviewKpi | null }) => {
   const { t } = useI18n();
+  const { mode } = useDecimal();
   const renewableMw = kpi
     ? sum([kpi.solar_mw, kpi.wind_mw, kpi.hydro_mw])
     : null;
@@ -143,7 +206,12 @@ const KpiBar = ({ kpi }: { kpi: OverviewKpi | null }) => {
     ? sum([kpi.solar_mw, kpi.wind_mw, kpi.hydro_mw, kpi.thermal_mw])
     : null;
   const r = renewableMw && totalMw ? ratio(renewableMw, totalMw) : null;
-  const renewablePct = r ? toRounded(D(r).mul(100), 1) : null;
+  const pctValue = r ? D(r).mul(100) : null;
+  const renewablePct = pctValue
+    ? mode === 'exact'
+      ? toRounded(pctValue, 2)
+      : toRounded(pctValue, Math.max(1, Number(mode)))
+    : null;
 
   return (
     <section className="space-y-6">
@@ -167,6 +235,7 @@ const KpiBar = ({ kpi }: { kpi: OverviewKpi | null }) => {
 
 const GenerationMix = ({ rows }: { rows: GenerationMixRow[] | null }) => {
   const { t } = useI18n();
+  const { mode } = useDecimal();
   const mixMap = rows ? Object.fromEntries(rows.map((r) => [r.fuel, r.mw])) : null;
   const totalMw = mixMap ? sum(Object.values(mixMap)) : null;
 
@@ -194,10 +263,10 @@ const GenerationMix = ({ rows }: { rows: GenerationMixRow[] | null }) => {
                 />
               </div>
               <span className="text-right font-mono text-xs tabular-nums text-fg">
-                {mw ? toDisplay(mw, { grouping: true, suffix: ' MW' }) : <Pending />}
+                {mw ? formatByMode(mw, mode, { grouping: true, suffix: ' MW' }) : <Pending />}
               </span>
               <span className="text-right font-mono text-[11px] tabular-nums text-fg-subtle">
-                {pctLabel ? `${pctLabel}%` : ''}
+                {pctLabel ? `${pctLabel}%` : <Skeleton className="h-3 w-8" />}
               </span>
             </div>
           );
