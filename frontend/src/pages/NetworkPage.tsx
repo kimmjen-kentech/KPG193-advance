@@ -2,9 +2,9 @@ import { useState, useMemo } from 'react';
 import { DeckGL } from 'deck.gl';
 import { ScatterplotLayer, LineLayer, PathLayer } from 'deck.gl';
 import type { PickingInfo } from 'deck.gl';
-import { Map } from 'react-map-gl/maplibre';
+import { Map as MapLibre } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { ChevronRight, CornerDownRight } from 'lucide-react';
+import { ChevronRight, CornerDownRight, Cable } from 'lucide-react';
 import { useQuery } from '../hooks/useQuery';
 import {
   networkBusesSQL,
@@ -41,10 +41,21 @@ const voltageRadius = (kv: number): number => {
 };
 
 const voltageWidth = (kv: number): number => {
-  if (kv >= 700) return 3;
-  if (kv >= 300) return 1.6;
-  return 0.8;
+  if (kv >= 700) return 3.5;
+  if (kv >= 300) return 2;
+  return 1.2;
 };
+
+const SELECTED = [249, 115, 22] as const;
+
+type Selection =
+  | { kind: 'bus'; id: number }
+  | { kind: 'branch'; branch: NetworkBranch }
+  | null;
+
+const branchKey = (b: NetworkBranch) => `${b.from_id}-${b.to_id}-${b.kv}-${b.rate_mva}`;
+
+const busLabel = (id: number, name: string) => `#${String(id).padStart(3, '0')}. ${name}`;
 
 export const NetworkPage = () => {
   const { theme } = useTheme();
@@ -52,21 +63,20 @@ export const NetworkPage = () => {
   const branches = useQuery<NetworkBranch>(networkBranchesSQL);
   const dcLines = useQuery<NetworkDcLine>(networkDcLinesSQL);
 
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selection, setSelection] = useState<Selection>(null);
   const [hoverInfo, setHoverInfo] = useState<PickingInfo | null>(null);
 
-  const selectedBus = useMemo(
-    () => buses.data?.find((b) => b.id === selectedId) ?? null,
-    [buses.data, selectedId],
-  );
-
-  const relatedBranches = useMemo(() => {
-    if (!selectedId || !branches.data) return [];
-    return branches.data.filter((b) => b.from_id === selectedId || b.to_id === selectedId);
-  }, [branches.data, selectedId]);
+  const busMap = useMemo(() => {
+    const m = new Map<number, NetworkBus>();
+    buses.data?.forEach((b) => m.set(b.id, b));
+    return m;
+  }, [buses.data]);
 
   const layers = useMemo(() => {
     const out: unknown[] = [];
+    const selectedBranchKey =
+      selection?.kind === 'branch' ? branchKey(selection.branch) : null;
+    const selectedBusId = selection?.kind === 'bus' ? selection.id : null;
 
     if (branches.data) {
       out.push(
@@ -78,9 +88,30 @@ export const NetworkPage = () => {
           getColor: (d: NetworkBranch) => voltageColor(d.kv),
           getWidth: (d: NetworkBranch) => voltageWidth(d.kv),
           widthUnits: 'pixels',
-          pickable: false,
+          widthMinPixels: 1,
+          pickable: true,
+          onClick: (info: PickingInfo) => {
+            const b = info.object as NetworkBranch | null;
+            if (b) setSelection({ kind: 'branch', branch: b });
+          },
+          onHover: (info: PickingInfo) => setHoverInfo(info),
         }),
       );
+
+      if (selection?.kind === 'branch') {
+        out.push(
+          new LineLayer({
+            id: 'selected-branch',
+            data: [selection.branch],
+            getSourcePosition: (d: NetworkBranch) => [d.from_lng, d.from_lat],
+            getTargetPosition: (d: NetworkBranch) => [d.to_lng, d.to_lat],
+            getColor: [...SELECTED, 255],
+            getWidth: 4.5,
+            widthUnits: 'pixels',
+            pickable: false,
+          }),
+        );
+      }
     }
 
     if (dcLines.data) {
@@ -107,55 +138,69 @@ export const NetworkPage = () => {
           data: buses.data,
           getPosition: (d: NetworkBus) => [d.lng, d.lat],
           getRadius: (d: NetworkBus) => voltageRadius(d.kv),
+          radiusMinPixels: 3,
+          radiusMaxPixels: 14,
           getFillColor: (d: NetworkBus) => voltageColor(d.kv),
           getLineColor: [10, 10, 10, 200],
           getLineWidth: 1,
           lineWidthUnits: 'pixels',
           stroked: true,
           pickable: true,
-          onClick: (info: PickingInfo) =>
-            setSelectedId((info.object as NetworkBus | null)?.id ?? null),
+          onClick: (info: PickingInfo) => {
+            const b = info.object as NetworkBus | null;
+            if (b) setSelection({ kind: 'bus', id: b.id });
+          },
           onHover: (info: PickingInfo) => setHoverInfo(info),
         }),
       );
 
-      const selected = buses.data.find((b) => b.id === selectedId);
-      if (selected) {
-        out.push(
-          new ScatterplotLayer({
-            id: 'selected-outer',
-            data: [selected],
-            getPosition: (d: NetworkBus) => [d.lng, d.lat],
-            getRadius: 18000,
-            getFillColor: [249, 115, 22, 40],
-            getLineColor: [249, 115, 22, 255],
-            getLineWidth: 2.5,
-            lineWidthUnits: 'pixels',
-            stroked: true,
-            pickable: false,
-          }),
-          new ScatterplotLayer({
-            id: 'selected-inner',
-            data: [selected],
-            getPosition: (d: NetworkBus) => [d.lng, d.lat],
-            getRadius: (d: NetworkBus) => voltageRadius(d.kv) * 1.4,
-            getFillColor: [249, 115, 22, 255],
-            getLineColor: [255, 255, 255, 255],
-            getLineWidth: 2,
-            lineWidthUnits: 'pixels',
-            stroked: true,
-            pickable: false,
-          }),
-        );
+      if (selectedBusId !== null) {
+        const bus = busMap.get(selectedBusId);
+        if (bus) {
+          out.push(
+            new ScatterplotLayer({
+              id: 'selected-bus-ring',
+              data: [bus],
+              getPosition: (d: NetworkBus) => [d.lng, d.lat],
+              getRadius: 16000,
+              radiusMinPixels: 16,
+              radiusMaxPixels: 32,
+              getFillColor: [...SELECTED, 40],
+              getLineColor: [...SELECTED, 255],
+              getLineWidth: 2.5,
+              lineWidthUnits: 'pixels',
+              stroked: true,
+              pickable: false,
+            }),
+            new ScatterplotLayer({
+              id: 'selected-bus-dot',
+              data: [bus],
+              getPosition: (d: NetworkBus) => [d.lng, d.lat],
+              getRadius: (d: NetworkBus) => voltageRadius(d.kv) * 1.5,
+              radiusMinPixels: 5,
+              radiusMaxPixels: 18,
+              getFillColor: [...SELECTED, 255],
+              getLineColor: [255, 255, 255, 255],
+              getLineWidth: 2,
+              lineWidthUnits: 'pixels',
+              stroked: true,
+              pickable: false,
+            }),
+          );
+        }
       }
     }
 
-    return out;
-  }, [buses.data, branches.data, dcLines.data, selectedId]);
+    return { out, selectedBranchKey };
+  }, [buses.data, branches.data, dcLines.data, selection, busMap]);
 
   const isLoading = buses.loading || branches.loading || dcLines.loading;
   const error = buses.error || branches.error || dcLines.error;
-  const hoveredBus = hoverInfo?.object as NetworkBus | undefined;
+  const hoveredObj = hoverInfo?.object;
+  const hoveredBus =
+    hoverInfo?.layer?.id === 'buses' ? (hoveredObj as NetworkBus | undefined) : undefined;
+  const hoveredBranch =
+    hoverInfo?.layer?.id === 'branches' ? (hoveredObj as NetworkBranch | undefined) : undefined;
 
   return (
     <div className="-mx-6 -my-8 h-[calc(100vh-65px)] sm:-mx-8">
@@ -164,9 +209,10 @@ export const NetworkPage = () => {
           <DeckGL
             initialViewState={INITIAL_VIEW}
             controller={true}
-            layers={layers as never[]}
+            layers={layers.out as never[]}
+            getCursor={({ isHovering }) => (isHovering ? 'pointer' : 'grab')}
           >
-            <Map mapStyle={theme === 'dark' ? MAP_STYLE_DARK : MAP_STYLE_LIGHT} />
+            <MapLibre mapStyle={theme === 'dark' ? MAP_STYLE_DARK : MAP_STYLE_LIGHT} />
           </DeckGL>
 
           <div className="pointer-events-none absolute left-5 top-5 space-y-3">
@@ -217,42 +263,92 @@ export const NetworkPage = () => {
             </div>
           </div>
 
-          {hoveredBus && hoverInfo && (
+          {(hoveredBus || hoveredBranch) && hoverInfo && (
             <div
               className="pointer-events-none absolute z-10 border border-border bg-bg-elev px-3 py-2 font-mono text-[10px]"
               style={{ left: hoverInfo.x + 12, top: hoverInfo.y + 12 }}
             >
-              <div className="font-bold text-fg">#{String(hoveredBus.id).padStart(3, '0')}</div>
-              <div className="text-fg-muted">
-                {hoveredBus.name_en} · {Math.round(hoveredBus.kv)} kV
-              </div>
+              {hoveredBus && (
+                <>
+                  <div className="font-bold text-fg">{busLabel(hoveredBus.id, hoveredBus.name_kr)}</div>
+                  <div className="text-fg-muted">
+                    {hoveredBus.name_en} · {Math.round(hoveredBus.kv)} kV
+                  </div>
+                </>
+              )}
+              {hoveredBranch && (
+                <>
+                  <div className="font-bold text-fg">
+                    {busMap.get(hoveredBranch.from_id)?.name_kr ?? `#${hoveredBranch.from_id}`}
+                    {' → '}
+                    {busMap.get(hoveredBranch.to_id)?.name_kr ?? `#${hoveredBranch.to_id}`}
+                  </div>
+                  <div className="text-fg-muted">
+                    {Math.round(hoveredBranch.kv)} kV · {toDisplay(hoveredBranch.rate_mva, { grouping: true })} MVA
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>
 
-        <aside className="hidden w-[360px] flex-col border-l border-border bg-bg lg:flex">
+        <aside className="hidden w-[380px] flex-col border-l border-border bg-bg lg:flex">
           <div className="border-b border-border bg-bg-subtle p-5">
             <span className="bg-fg px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-bg">
-              Node_Inspector
+              {selection?.kind === 'branch' ? 'Branch_Inspector' : 'Node_Inspector'}
             </span>
             <h2 className="mt-3 font-serif text-2xl italic uppercase leading-none tracking-tight text-fg">
               Terminal
             </h2>
             <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.2em] text-fg-subtle">
-              Select node for deep scan
+              {selection ? 'tap map to switch' : 'select node or branch'}
             </p>
           </div>
 
           <div className="flex-1 overflow-y-auto">
-            {selectedBus ? (
-              <BusDetail
-                bus={selectedBus}
-                branches={relatedBranches}
-                onClose={() => setSelectedId(null)}
-              />
-            ) : (
-              <BusList buses={buses.data ?? []} onSelect={setSelectedId} />
-            )}
+            {selection?.kind === 'bus' &&
+              busMap.get(selection.id) &&
+              (() => {
+                const bus = busMap.get(selection.id)!;
+                const related = (branches.data ?? []).filter(
+                  (b) => b.from_id === bus.id || b.to_id === bus.id,
+                );
+                return (
+                  <BusDetail
+                    bus={bus}
+                    branches={related}
+                    busMap={busMap}
+                    onClose={() => setSelection(null)}
+                    onSelectBranch={(b) => setSelection({ kind: 'branch', branch: b })}
+                    onSelectBus={(id) => setSelection({ kind: 'bus', id })}
+                  />
+                );
+              })()}
+
+            {selection?.kind === 'branch' &&
+              (() => {
+                const sel = selection.branch;
+                const connected = (branches.data ?? []).filter(
+                  (b) =>
+                    branchKey(b) !== branchKey(sel) &&
+                    (b.from_id === sel.from_id ||
+                      b.to_id === sel.from_id ||
+                      b.from_id === sel.to_id ||
+                      b.to_id === sel.to_id),
+                );
+                return (
+                  <BranchDetail
+                    branch={sel}
+                    connected={connected}
+                    busMap={busMap}
+                    onClose={() => setSelection(null)}
+                    onSelectBranch={(b) => setSelection({ kind: 'branch', branch: b })}
+                    onSelectBus={(id) => setSelection({ kind: 'bus', id })}
+                  />
+                );
+              })()}
+
+            {!selection && <BusList buses={buses.data ?? []} onSelect={(id) => setSelection({ kind: 'bus', id })} />}
           </div>
         </aside>
       </div>
@@ -263,11 +359,17 @@ export const NetworkPage = () => {
 const BusDetail = ({
   bus,
   branches,
+  busMap,
   onClose,
+  onSelectBranch,
+  onSelectBus,
 }: {
   bus: NetworkBus;
   branches: NetworkBranch[];
+  busMap: Map<number, NetworkBus>;
   onClose: () => void;
+  onSelectBranch: (b: NetworkBranch) => void;
+  onSelectBus: (id: number) => void;
 }) => (
   <div className="space-y-6 p-5">
     <div className="flex items-start justify-between">
@@ -275,9 +377,12 @@ const BusDetail = ({
         <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-fg-subtle">
           Node_Identifier
         </div>
-        <h3 className="mt-1 font-mono text-3xl font-bold tracking-tight text-fg tabular-nums">
-          #{String(bus.id).padStart(3, '0')}
+        <h3 className="mt-1 font-mono text-2xl font-bold tracking-tight text-fg tabular-nums">
+          {busLabel(bus.id, bus.name_kr)}
         </h3>
+        <p className="font-mono text-[10px] uppercase tracking-tight text-fg-muted">
+          {bus.name_en}
+        </p>
       </div>
       <button
         onClick={onClose}
@@ -288,11 +393,6 @@ const BusDetail = ({
     </div>
 
     <div className="grid grid-cols-2 gap-px border border-border bg-border">
-      <Cell label="Designation" colSpan={2}>
-        <span className="font-serif text-lg italic">
-          {bus.name_en} / {bus.name_kr}
-        </span>
-      </Cell>
       <Cell label="Voltage">
         <span className="font-mono text-base tabular-nums">{Math.round(bus.kv)} kV</span>
       </Cell>
@@ -317,35 +417,172 @@ const BusDetail = ({
     </div>
 
     <div>
-      <div className="mb-3 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg">
-        Branches ({branches.length})
+      <div className="mb-3 flex items-center justify-between">
+        <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg">
+          Connected Branches
+        </span>
+        <span className="bg-bg-subtle px-2 py-0.5 font-mono text-[9px] text-fg-muted">
+          {branches.length}
+        </span>
       </div>
       <div className="border-t border-border">
-        {branches.map((br, i) => {
-          const other = br.from_id === bus.id ? br.to_id : br.from_id;
+        {branches.map((br) => {
+          const otherId = br.from_id === bus.id ? br.to_id : br.from_id;
+          const other = busMap.get(otherId);
           return (
-            <div
-              key={i}
-              className="flex items-center justify-between border-b border-border/50 py-2.5"
+            <button
+              key={branchKey(br)}
+              onClick={() => onSelectBranch(br)}
+              className="group grid w-full grid-cols-[1fr_auto] items-center gap-2 border-b border-border/40 py-2.5 text-left transition-colors hover:bg-bg-subtle"
             >
-              <div className="flex items-center gap-3">
-                <CornerDownRight size={12} className="text-fg-subtle" />
-                <span className="font-mono text-[11px] text-fg">
-                  → #{String(other).padStart(3, '0')}
+              <div className="flex items-center gap-2 min-w-0">
+                <CornerDownRight size={12} className="text-fg-subtle shrink-0" />
+                <span className="font-mono text-[11px] text-fg truncate">
+                  → {other ? busLabel(otherId, other.name_kr) : `#${otherId}`}
                 </span>
-                <span className="font-mono text-[10px] text-fg-subtle">
-                  {Math.round(br.kv)} kV
+                <span
+                  className="ml-auto shrink-0 cursor-pointer font-mono text-[9px] text-fg-subtle hover:text-fg"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelectBus(otherId);
+                  }}
+                >
+                  ↗
                 </span>
               </div>
-              <span className="bg-bg-subtle px-2 py-0.5 font-mono text-[10px] text-fg-muted">
-                {toDisplay(br.rate_mva, { grouping: true })} MVA
+              <span className="bg-bg-subtle px-2 py-0.5 font-mono text-[10px] text-fg-muted whitespace-nowrap">
+                {Math.round(br.kv)}kV · {toDisplay(br.rate_mva, { grouping: true })} MVA
               </span>
-            </div>
+            </button>
           );
         })}
       </div>
     </div>
   </div>
+);
+
+const BranchDetail = ({
+  branch,
+  connected,
+  busMap,
+  onClose,
+  onSelectBranch,
+  onSelectBus,
+}: {
+  branch: NetworkBranch;
+  connected: NetworkBranch[];
+  busMap: Map<number, NetworkBus>;
+  onClose: () => void;
+  onSelectBranch: (b: NetworkBranch) => void;
+  onSelectBus: (id: number) => void;
+}) => {
+  const from = busMap.get(branch.from_id);
+  const to = busMap.get(branch.to_id);
+  return (
+    <div className="space-y-6 p-5">
+      <div className="flex items-start justify-between">
+        <div>
+          <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-fg-subtle">
+            Branch_Identifier
+          </div>
+          <h3 className="mt-1 flex items-center gap-2 font-mono text-base font-bold text-fg">
+            <Cable size={14} />
+            <span className="tabular-nums">{Math.round(branch.kv)} kV</span>
+          </h3>
+        </div>
+        <button
+          onClick={onClose}
+          className="border border-border p-1.5 text-fg transition-colors hover:bg-fg hover:text-bg"
+        >
+          <ChevronRight size={14} />
+        </button>
+      </div>
+
+      <div className="space-y-3">
+        <BusBtn label="From" bus={from} id={branch.from_id} onClick={onSelectBus} />
+        <BusBtn label="To" bus={to} id={branch.to_id} onClick={onSelectBus} />
+      </div>
+
+      <div className="grid grid-cols-2 gap-px border border-border bg-border">
+        <Cell label="Voltage">
+          <span className="font-mono text-base tabular-nums">{Math.round(branch.kv)} kV</span>
+        </Cell>
+        <Cell label="Rating">
+          <span className="font-mono text-xs tabular-nums">
+            {toDisplay(branch.rate_mva, { grouping: true })} MVA
+          </span>
+        </Cell>
+      </div>
+
+      <div>
+        <div className="mb-3 flex items-center justify-between">
+          <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg">
+            Connected Branches
+          </span>
+          <span className="bg-bg-subtle px-2 py-0.5 font-mono text-[9px] text-fg-muted">
+            {connected.length}
+          </span>
+        </div>
+        <div className="border-t border-border">
+          {connected.map((br) => {
+            const f = busMap.get(br.from_id);
+            const t = busMap.get(br.to_id);
+            return (
+              <button
+                key={branchKey(br)}
+                onClick={() => onSelectBranch(br)}
+                className="grid w-full grid-cols-[1fr_auto] items-center gap-2 border-b border-border/40 py-2.5 text-left transition-colors hover:bg-bg-subtle"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <CornerDownRight size={12} className="text-fg-subtle shrink-0" />
+                  <span className="font-mono text-[11px] text-fg truncate">
+                    {f ? busLabel(br.from_id, f.name_kr) : `#${br.from_id}`}
+                    {' → '}
+                    {t ? busLabel(br.to_id, t.name_kr) : `#${br.to_id}`}
+                  </span>
+                </div>
+                <span className="bg-bg-subtle px-2 py-0.5 font-mono text-[10px] text-fg-muted whitespace-nowrap">
+                  {Math.round(br.kv)}kV
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const BusBtn = ({
+  label,
+  bus,
+  id,
+  onClick,
+}: {
+  label: string;
+  bus: NetworkBus | undefined;
+  id: number;
+  onClick: (id: number) => void;
+}) => (
+  <button
+    onClick={() => onClick(id)}
+    className="group flex w-full items-center justify-between border border-border bg-bg-elev p-3 text-left transition-colors hover:bg-bg-subtle"
+  >
+    <div>
+      <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-fg-subtle">
+        {label}
+      </div>
+      <div className="font-mono text-sm font-bold tracking-tight tabular-nums text-fg">
+        {bus ? busLabel(id, bus.name_kr) : `#${String(id).padStart(3, '0')}`}
+      </div>
+      {bus && (
+        <div className="font-mono text-[10px] text-fg-muted">
+          {bus.name_en} · {Math.round(bus.kv)} kV
+        </div>
+      )}
+    </div>
+    <ChevronRight size={14} className="text-fg-subtle group-hover:text-fg" />
+  </button>
 );
 
 const Cell = ({
@@ -373,7 +610,7 @@ const BusList = ({
   onSelect: (id: number) => void;
 }) => (
   <div>
-    <div className="sticky top-0 z-10 grid grid-cols-[40px_1fr_60px] border-b border-border bg-bg-subtle px-5 py-2 font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-fg-subtle">
+    <div className="sticky top-0 z-10 grid grid-cols-[44px_1fr_60px] border-b border-border bg-bg-subtle px-5 py-2 font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-fg-subtle">
       <span>ID</span>
       <span>Name</span>
       <span className="text-right">kV</span>
@@ -382,13 +619,13 @@ const BusList = ({
       <button
         key={bus.id}
         onClick={() => onSelect(bus.id)}
-        className="grid w-full grid-cols-[40px_1fr_60px] items-center border-b border-border/30 px-5 py-2 text-left transition-colors hover:bg-fg hover:text-bg"
+        className="grid w-full grid-cols-[44px_1fr_60px] items-center border-b border-border/30 px-5 py-2 text-left transition-colors hover:bg-fg hover:text-bg"
       >
         <span className="font-mono text-[10px] text-fg-subtle">
-          {String(bus.id).padStart(3, '0')}
+          #{String(bus.id).padStart(3, '0')}
         </span>
         <span className="font-mono text-xs font-bold uppercase tracking-tight">
-          {bus.name_en}
+          {bus.name_kr}
         </span>
         <span className="text-right font-mono text-xs tabular-nums text-fg-muted">
           {Math.round(bus.kv)}
