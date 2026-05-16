@@ -12,8 +12,7 @@ import {
   type GenerationMixRow,
 } from '../lib/queries';
 
-const RENEWABLE_FUELS = ['solar', 'wind', 'hydro'] as const;
-const MIX_FUEL_ORDER = ['thermal', 'solar', 'wind', 'hydro'] as const;
+const MIX_FUEL_ORDER = ['coal', 'lng', 'nuclear', 'solar', 'wind', 'hydro'] as const;
 
 const Sparkline = () => {
   const points = Array.from({ length: 64 }, (_, i) => {
@@ -164,8 +163,6 @@ const GenerationMix = ({ rows }: { rows: GenerationMixRow[] | null }) => {
           const r = mw && totalMw ? ratio(mw, totalMw) : null;
           const widthPct = r ? toRounded(D(r).mul(100), 2) : '0';
           const pctLabel = r ? toRounded(D(r).mul(100), 1) : null;
-          const colorKey =
-            key === 'thermal' ? 'coal' : (key as keyof typeof FUEL_COLORS_HEX);
           return (
             <div key={key} className="grid grid-cols-[100px_1fr_120px_60px] items-center gap-3">
               <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg">
@@ -176,7 +173,7 @@ const GenerationMix = ({ rows }: { rows: GenerationMixRow[] | null }) => {
                   className="h-full transition-[width] duration-500"
                   style={{
                     width: `${widthPct}%`,
-                    backgroundColor: FUEL_COLORS_HEX[colorKey],
+                    backgroundColor: FUEL_COLORS_HEX[key],
                   }}
                 />
               </div>
@@ -190,11 +187,6 @@ const GenerationMix = ({ rows }: { rows: GenerationMixRow[] | null }) => {
           );
         })}
       </div>
-      {RENEWABLE_FUELS.length > 0 && (
-        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-fg-subtle">
-          Thermal: coal + LNG + nuclear (분리 표시는 후속 작업)
-        </p>
-      )}
     </section>
   );
 };

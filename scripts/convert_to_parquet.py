@@ -7,6 +7,7 @@ DECIMAL(28, 12)로 저장하여 정밀도를 보존한다.
 출력: frontend/public/data/*.parquet (zstd 최대 압축)
 """
 
+import re
 from pathlib import Path
 
 import numpy as np
@@ -82,13 +83,43 @@ def _mat_to_table(arr: np.ndarray, cols: list[str]) -> pa.Table:
     return _to_decimal(pa.table(data))
 
 
+def _extract_fuels(m_path: Path, section: str) -> list[str]:
+    """`.m` 파일의 특정 섹션 (gen/gencost/genthermal) 끝에 붙은 fuel 주석 추출."""
+    fuels: list[str] = []
+    in_section = False
+    pattern = re.compile(rf"mpc\.{section}\s*=\s*\[")
+    fuel_re = re.compile(r"%\s*(Coal|LNG|Nuclear|Oil|Gas)", re.IGNORECASE)
+    with m_path.open() as f:
+        for line in f:
+            if not in_section:
+                if pattern.search(line):
+                    in_section = True
+                continue
+            if "];" in line:
+                break
+            m = fuel_re.search(line)
+            if m:
+                fuels.append(m.group(1).lower())
+    return fuels
+
+
 def convert_matpower() -> None:
     print("• network/mat (MATPOWER)")
     mat = scipy.io.loadmat(SRC / "network" / "mat" / "KPG193_ver1_5.mat",
                            squeeze_me=True, struct_as_record=False)
     mpc = mat["mpc"]
     _write(_mat_to_table(mpc.bus, BUS_COLS), "buses")
-    _write(_mat_to_table(mpc.gen, GEN_COLS), "generators")
+
+    # gen + fuel 주석에서 추출한 fuel 컬럼 추가
+    gen_table = _mat_to_table(mpc.gen, GEN_COLS)
+    fuels = _extract_fuels(SRC / "network" / "m" / "KPG193_ver1_5.m", "genthermal")
+    if len(fuels) == gen_table.num_rows:
+        fuel_array = pa.array(fuels, type=pa.string())
+        gen_table = gen_table.append_column("fuel", fuel_array)
+    else:
+        print(f"  WARN: fuel count {len(fuels)} != gen rows {gen_table.num_rows}, fuel 컬럼 생략")
+    _write(gen_table, "generators")
+
     _write(_mat_to_table(mpc.branch, BRANCH_COLS), "branches")
     if hasattr(mpc, "dcline"):
         dcline = mpc.dcline

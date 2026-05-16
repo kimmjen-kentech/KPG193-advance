@@ -26,17 +26,19 @@ export interface OverviewKpi {
 }
 
 export const generationMixSQL = `
-  SELECT 'solar' AS fuel, SUM("Pmax [MW]")::VARCHAR AS mw FROM '${u('capacity_solar')}'
+  SELECT fuel, SUM(Pmax)::VARCHAR AS mw
+  FROM '${u('generators')}'
+  GROUP BY fuel
+  UNION ALL
+  SELECT 'solar' AS fuel, SUM("Pmax [MW]")::VARCHAR FROM '${u('capacity_solar')}'
   UNION ALL
   SELECT 'wind',  SUM("Pmax [MW]")::VARCHAR FROM '${u('capacity_wind')}'
   UNION ALL
   SELECT 'hydro', SUM("Pmax [MW]")::VARCHAR FROM '${u('capacity_hydro')}'
-  UNION ALL
-  SELECT 'thermal', SUM(Pmax)::VARCHAR FROM '${u('generators')}'
 `;
 
 export interface GenerationMixRow {
-  fuel: 'solar' | 'wind' | 'hydro' | 'thermal';
+  fuel: 'coal' | 'lng' | 'nuclear' | 'solar' | 'wind' | 'hydro';
   mw: string;
 }
 

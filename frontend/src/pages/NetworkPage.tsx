@@ -107,8 +107,7 @@ export const NetworkPage = () => {
           data: buses.data,
           getPosition: (d: NetworkBus) => [d.lng, d.lat],
           getRadius: (d: NetworkBus) => voltageRadius(d.kv),
-          getFillColor: (d: NetworkBus) =>
-            d.id === selectedId ? [37, 99, 235, 255] : voltageColor(d.kv),
+          getFillColor: (d: NetworkBus) => voltageColor(d.kv),
           getLineColor: [10, 10, 10, 200],
           getLineWidth: 1,
           lineWidthUnits: 'pixels',
@@ -117,9 +116,38 @@ export const NetworkPage = () => {
           onClick: (info: PickingInfo) =>
             setSelectedId((info.object as NetworkBus | null)?.id ?? null),
           onHover: (info: PickingInfo) => setHoverInfo(info),
-          updateTriggers: { getFillColor: selectedId },
         }),
       );
+
+      const selected = buses.data.find((b) => b.id === selectedId);
+      if (selected) {
+        out.push(
+          new ScatterplotLayer({
+            id: 'selected-outer',
+            data: [selected],
+            getPosition: (d: NetworkBus) => [d.lng, d.lat],
+            getRadius: 18000,
+            getFillColor: [249, 115, 22, 40],
+            getLineColor: [249, 115, 22, 255],
+            getLineWidth: 2.5,
+            lineWidthUnits: 'pixels',
+            stroked: true,
+            pickable: false,
+          }),
+          new ScatterplotLayer({
+            id: 'selected-inner',
+            data: [selected],
+            getPosition: (d: NetworkBus) => [d.lng, d.lat],
+            getRadius: (d: NetworkBus) => voltageRadius(d.kv) * 1.4,
+            getFillColor: [249, 115, 22, 255],
+            getLineColor: [255, 255, 255, 255],
+            getLineWidth: 2,
+            lineWidthUnits: 'pixels',
+            stroked: true,
+            pickable: false,
+          }),
+        );
+      }
     }
 
     return out;
