@@ -74,7 +74,7 @@ export const NetworkPage = () => {
   const dcLines = useQuery<NetworkDcLine>(networkDcLinesSQL);
   const generators = useQuery<NetworkGenerator>(networkGeneratorsSQL);
   const genMix = useQuery<NetworkBusGenMix>(networkGenerationMixSQL);
-  const [genView, setGenView] = useState<'off' | 'base' | 'icons' | 'pie'>('base');
+  const [genView, setGenView] = useState<'off' | 'base' | 'icons' | 'pie'>('pie');
 
   const [selection, setSelection] = useState<Selection>(null);
   const [hoverInfo, setHoverInfo] = useState<PickingInfo | null>(null);
