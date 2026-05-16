@@ -254,8 +254,8 @@ export const NetworkPage = () => {
     hoverInfo?.layer?.id === 'branches' ? (hoveredObj as NetworkBranch | undefined) : undefined;
 
   return (
-    <div className="-mx-6 -my-8 h-[calc(100vh-65px)] sm:-mx-8">
-      <div className="flex h-full border-t border-border">
+    <div className="-mx-4 -my-8 h-[calc(100vh-65px)] sm:-mx-6 lg:-mx-8">
+      <div className="flex h-full flex-col border-t border-border lg:flex-row">
         <div className="relative flex-1 bg-bg-subtle">
           <DeckGL
             initialViewState={INITIAL_VIEW}
@@ -376,7 +376,7 @@ export const NetworkPage = () => {
           )}
         </div>
 
-        <aside className="hidden w-[380px] flex-col border-l border-border bg-bg lg:flex">
+        <aside className="flex max-h-[40vh] w-full flex-col border-t border-border bg-bg lg:max-h-none lg:w-[380px] lg:border-l lg:border-t-0">
           <div className="border-b border-border bg-bg-subtle p-5">
             <span className="bg-fg px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-bg">
               {selection?.kind === 'branch' ? 'Branch_Inspector' : 'Node_Inspector'}

@@ -1,4 +1,6 @@
-import { NavLink } from 'react-router-dom';
+import { useState } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
+import { Menu, X } from 'lucide-react';
 import { cn } from '../../lib/cn';
 import { ThemeToggle } from '../ThemeToggle';
 
@@ -23,57 +25,94 @@ const NAV_ITEMS = [
   { to: '/guide', label: 'Guide' },
 ];
 
-export const TopNav = () => (
-  <nav className="sticky top-0 z-50 border-b border-border bg-bg/90 backdrop-blur">
-    <div className="mx-auto flex h-14 max-w-[1440px] items-center justify-between px-6">
-      <div className="flex items-center gap-10">
-        <NavLink to="/" className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center bg-fg text-bg">
-            <span className="font-mono text-[10px] font-bold leading-none">KPG</span>
-          </div>
-          <div className="flex flex-col -space-y-0.5">
-            <span className="font-mono text-sm font-bold uppercase leading-none tracking-tight text-fg">
-              193_TESTBED
-            </span>
-            <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-fg-subtle">
-              v1.5_STABLE
-            </span>
-          </div>
-        </NavLink>
+export const TopNav = () => {
+  const [open, setOpen] = useState(false);
+  const location = useLocation();
 
-        <div className="hidden gap-6 md:flex">
-          {NAV_ITEMS.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              className={({ isActive }) =>
-                cn(
-                  'relative flex h-14 items-center font-mono text-[10px] font-bold uppercase tracking-[0.2em] transition-colors',
-                  isActive
-                    ? 'text-fg after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-fg'
-                    : 'text-fg-subtle hover:text-fg',
-                )
-              }
-            >
-              {item.label}
-            </NavLink>
-          ))}
+  return (
+    <nav className="sticky top-0 z-50 border-b border-border bg-bg/90 backdrop-blur">
+      <div className="mx-auto flex h-14 max-w-[1440px] items-center justify-between px-4 sm:px-6">
+        <div className="flex items-center gap-6 lg:gap-10">
+          <NavLink to="/" className="flex items-center gap-3" onClick={() => setOpen(false)}>
+            <div className="flex h-8 w-8 items-center justify-center bg-fg text-bg">
+              <span className="font-mono text-[10px] font-bold leading-none">KPG</span>
+            </div>
+            <div className="hidden flex-col -space-y-0.5 sm:flex">
+              <span className="font-mono text-sm font-bold uppercase leading-none tracking-tight text-fg">
+                193_TESTBED
+              </span>
+              <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-fg-subtle">
+                v1.5_STABLE
+              </span>
+            </div>
+          </NavLink>
+
+          <div className="hidden gap-6 md:flex">
+            {NAV_ITEMS.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                className={({ isActive }) =>
+                  cn(
+                    'relative flex h-14 items-center font-mono text-[10px] font-bold uppercase tracking-[0.2em] transition-colors',
+                    isActive
+                      ? 'text-fg after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-fg'
+                      : 'text-fg-subtle hover:text-fg',
+                  )
+                }
+              >
+                {item.label}
+              </NavLink>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 sm:gap-3">
+          <ThemeToggle />
+          <a
+            href="https://github.com/agm-center/kpg-testgrid"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="GitHub repository"
+            className="hidden h-8 w-8 items-center justify-center border border-border text-fg transition-colors hover:bg-bg-subtle sm:inline-flex"
+          >
+            <GithubIcon size={14} />
+          </a>
+          <button
+            onClick={() => setOpen((v) => !v)}
+            aria-label={open ? 'Close menu' : 'Open menu'}
+            className="inline-flex h-8 w-8 items-center justify-center border border-border text-fg transition-colors hover:bg-bg-subtle md:hidden"
+          >
+            {open ? <X size={14} /> : <Menu size={14} />}
+          </button>
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
-        <ThemeToggle />
-        <a
-          href="https://github.com/agm-center/kpg-testgrid"
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="GitHub repository"
-          className="inline-flex h-8 w-8 items-center justify-center border border-border text-fg transition-colors hover:bg-bg-subtle"
-        >
-          <GithubIcon size={14} />
-        </a>
-      </div>
-    </div>
-  </nav>
-);
+      {open && (
+        <div className="border-t border-border bg-bg md:hidden">
+          <div className="flex flex-col">
+            {NAV_ITEMS.map((item) => {
+              const isActive =
+                item.end ? location.pathname === item.to : location.pathname.startsWith(item.to);
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.end}
+                  onClick={() => setOpen(false)}
+                  className={cn(
+                    'flex items-center border-b border-border/40 px-6 py-4 font-mono text-xs font-bold uppercase tracking-[0.2em] transition-colors',
+                    isActive ? 'bg-fg text-bg' : 'text-fg hover:bg-bg-subtle',
+                  )}
+                >
+                  {item.label}
+                </NavLink>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </nav>
+  );
+};

@@ -86,7 +86,7 @@ const Hero = () => (
         </span>
       </div>
 
-      <h1 className="font-serif text-6xl italic leading-[0.95] tracking-tight text-fg sm:text-7xl">
+      <h1 className="font-serif text-5xl italic leading-[0.95] tracking-tight text-fg sm:text-6xl lg:text-7xl">
         Synthetic<br />Korean Grid<br />Testbed.
       </h1>
 

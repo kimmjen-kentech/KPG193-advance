@@ -27,7 +27,7 @@ export const MethodologyPage = () => (
       <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg-subtle">
         Methodology
       </span>
-      <h1 className="font-serif text-5xl italic leading-none tracking-tight text-fg">
+      <h1 className="font-serif text-4xl italic leading-none tracking-tight text-fg sm:text-5xl">
         Methodology.
       </h1>
       <p className="max-w-2xl border-l-2 border-fg pl-4 font-serif text-base italic text-fg-muted">
