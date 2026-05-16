@@ -76,11 +76,11 @@ solar_cap = CSV.read("kpg193_v1_5/renewables_capacity/solar_generators_2022.csv"
       },
     },
     {
-      title: { ko: '기준 UC 참조', en: 'Reference UC Solution' },
+      title: { ko: 'Reference UC Solution', en: 'Reference UC Solution' },
       body: {
         ko: `commit = CSV.read("kpg193_v1_5/profile/commitment_decision/commitment_decision_\$day.csv", DataFrame)
 # columns: hour (1-24), generator_id (1-122), status (0=off, 1=on)
-# 알고리즘 검증용 기준 UC 해 (tight MILP)`,
+# 알고리즘 검증용 Reference UC Solution (tight MILP)`,
         en: `commit = CSV.read("kpg193_v1_5/profile/commitment_decision/commitment_decision_\$day.csv", DataFrame)
 # columns: hour (1-24), generator_id (1-122), status (0=off, 1=on)
 # Reference solution for algorithm validation (tight MILP)`,
