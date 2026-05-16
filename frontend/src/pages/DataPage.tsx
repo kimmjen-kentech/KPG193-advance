@@ -103,7 +103,7 @@ const DATASETS: Dataset[] = [
     { name: 'wind_v_93m_m/s', type: 'DECIMAL' },
     { name: 'wind_speed_93m_m/s', type: 'DECIMAL' },
   ]),
-  ds('profile_commitment', 1_068_720, '참조 UC 해 (단위 약정 결정)', 'Reference UC solution (unit commitment decisions)', [
+  ds('profile_commitment', 1_068_720, '기준 UC 참조 (단위 약정 결정)', 'Reference UC solution (unit commitment decisions)', [
     { name: 'day / hour', type: 'INT' },
     { name: 'generator_id', type: 'INT64', note: note('1-122', '1-122') },
     { name: 'status', type: 'INT64', note: note('0=off, 1=on', '0=off, 1=on') },
