@@ -13,6 +13,7 @@ import { AreaChart } from '../components/charts/AreaChart';
 import { LineSeriesChart } from '../components/charts/LineSeriesChart';
 import { FUEL_COLORS_HEX, FUEL_LABELS } from '../lib/constants';
 import { toRounded } from '../utils/decimal';
+import { Skeleton } from '../components/ui/Skeleton';
 
 const dayToDate = (day: number): string => {
   const d = new Date(2022, 0, 1);
@@ -305,7 +306,7 @@ const LegendInline = ({ items }: { items: [string, string][] }) => (
 );
 
 const ChartPending = () => (
-  <div className="flex h-full items-center justify-center font-mono text-[10px] text-fg-subtle">
-    loading parquet …
+  <div className="flex h-full flex-col gap-2 py-3">
+    <Skeleton className="h-full w-full" />
   </div>
 );
