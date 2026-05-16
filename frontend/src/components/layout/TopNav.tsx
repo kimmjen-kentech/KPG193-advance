@@ -3,6 +3,8 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { cn } from '../../lib/cn';
 import { ThemeToggle } from '../ThemeToggle';
+import { LocaleToggle } from '../LocaleToggle';
+import { useI18n } from '../../hooks/useI18n';
 
 const GithubIcon = ({ size = 14 }: { size?: number }) => (
   <svg
@@ -16,18 +18,23 @@ const GithubIcon = ({ size = 14 }: { size?: number }) => (
   </svg>
 );
 
-const NAV_ITEMS = [
-  { to: '/', label: 'Index', end: true },
-  { to: '/network', label: 'Network' },
-  { to: '/profiles', label: 'Profiles' },
-  { to: '/data', label: 'Data' },
-  { to: '/methodology', label: 'Methodology' },
-  { to: '/guide', label: 'Guide' },
+const NAV_KEYS: ReadonlyArray<{ to: string; key: 'index' | 'network' | 'profiles' | 'data' | 'methodology' | 'guide'; end?: boolean }> = [
+  { to: '/', key: 'index', end: true },
+  { to: '/network', key: 'network' },
+  { to: '/profiles', key: 'profiles' },
+  { to: '/data', key: 'data' },
+  { to: '/methodology', key: 'methodology' },
+  { to: '/guide', key: 'guide' },
 ];
 
 export const TopNav = () => {
   const [open, setOpen] = useState(false);
   const location = useLocation();
+  const { t } = useI18n();
+  const NAV_ITEMS = NAV_KEYS.map((n) => ({
+    ...n,
+    label: t.nav[n.key as keyof typeof t.nav],
+  }));
 
   return (
     <nav className="sticky top-0 z-50 border-b border-border bg-bg/90 backdrop-blur">
@@ -69,6 +76,7 @@ export const TopNav = () => {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
+          <LocaleToggle />
           <ThemeToggle />
           <a
             href="https://github.com/agm-center/kpg-testgrid"

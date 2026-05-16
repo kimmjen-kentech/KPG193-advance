@@ -6,6 +6,7 @@ import { FUEL_COLORS_HEX, FUEL_LABELS } from '../lib/constants';
 import { D, ratio, sum, toDisplay, toRounded } from '../utils/decimal';
 import { useQuery } from '../hooks/useQuery';
 import { Skeleton } from '../components/ui/Skeleton';
+import { useI18n } from '../hooks/useI18n';
 import {
   overviewKpiSQL,
   generationMixSQL,
@@ -34,92 +35,98 @@ const Sparkline = () => {
   );
 };
 
-const TopologyCard = () => (
-  <div className="relative aspect-square border border-border bg-bg-subtle p-4">
-    <div
-      className="absolute inset-0 opacity-[0.08]"
-      style={{
-        backgroundImage: 'radial-gradient(currentColor 1px, transparent 1px)',
-        backgroundSize: '18px 18px',
-      }}
-    />
-    <div className="absolute left-5 top-5 flex items-center gap-2">
-      <span className="relative flex h-2 w-2">
-        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-60" />
-        <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
-      </span>
-      <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg">
-        Topology_Buffer
-      </span>
-    </div>
-
-    <div className="relative z-10 flex h-full flex-col items-center justify-center gap-6">
-      <Network size={96} strokeWidth={0.8} className="opacity-30" />
-      <div className="space-y-1 text-center">
-        <div className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg">
-          Node_Density_Mapped
-        </div>
-        <p className="font-mono text-[10px] uppercase leading-relaxed text-fg-subtle">
-          193 nodes // 5 clusters // isolated peninsula
-        </p>
-      </div>
-    </div>
-
-    <div className="absolute bottom-5 right-5 text-right">
-      <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-fg-subtle">
-        Frequency
-      </div>
-      <div className="font-mono text-sm font-bold text-accent tabular-nums">60.00 Hz</div>
-    </div>
-  </div>
-);
-
-const Hero = () => (
-  <section className="grid items-center gap-12 lg:grid-cols-2">
-    <div className="space-y-8">
-      <div className="flex items-center gap-3">
-        <div className="flex h-7 w-7 items-center justify-center bg-fg text-bg">
-          <Zap size={14} strokeWidth={1.6} />
-        </div>
+const TopologyCard = () => {
+  const { t } = useI18n();
+  return (
+    <div className="relative aspect-square border border-border bg-bg-subtle p-4">
+      <div
+        className="absolute inset-0 opacity-[0.08]"
+        style={{
+          backgroundImage: 'radial-gradient(currentColor 1px, transparent 1px)',
+          backgroundSize: '18px 18px',
+        }}
+      />
+      <div className="absolute left-5 top-5 flex items-center gap-2">
+        <span className="relative flex h-2 w-2">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-60" />
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
+        </span>
         <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg">
-          Kernel_Core_Access
+          {t.overview.topologyTitle}
         </span>
       </div>
 
-      <h1 className="font-serif text-5xl italic leading-[0.95] tracking-tight text-fg sm:text-6xl lg:text-7xl">
-        Synthetic<br />Korean Grid<br />Testbed.
-      </h1>
+      <div className="relative z-10 flex h-full flex-col items-center justify-center gap-6">
+        <Network size={96} strokeWidth={0.8} className="opacity-30" />
+        <div className="space-y-1 text-center">
+          <div className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg">
+            Node_Density_Mapped
+          </div>
+          <p className="font-mono text-[10px] uppercase leading-relaxed text-fg-subtle">
+            {t.overview.nodeDensity}
+          </p>
+        </div>
+      </div>
 
-      <p className="max-w-xl border-l-2 border-fg pl-5 font-serif text-lg italic leading-relaxed text-fg-muted">
-        A high-fidelity research framework for the Korean power grid, engineered to simulate deep
-        decarbonization scenarios and modern grid stability.
-      </p>
-
-      <div className="flex flex-wrap gap-3 pt-2">
-        <Link
-          to="/network"
-          className="inline-flex items-center gap-3 bg-fg px-6 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-bg transition-opacity hover:opacity-90"
-        >
-          <Activity size={14} strokeWidth={1.6} />
-          Initialize Monitor
-        </Link>
-        <Link
-          to="/methodology"
-          className="inline-flex items-center gap-3 border border-fg px-6 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg transition-colors hover:bg-fg hover:text-bg"
-        >
-          <Info size={14} strokeWidth={1.6} />
-          Methodology
-        </Link>
+      <div className="absolute bottom-5 right-5 text-right">
+        <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-fg-subtle">
+          {t.overview.frequency}
+        </div>
+        <div className="font-mono text-sm font-bold text-accent tabular-nums">60.00 Hz</div>
       </div>
     </div>
+  );
+};
 
-    <TopologyCard />
-  </section>
-);
+const Hero = () => {
+  const { t } = useI18n();
+  return (
+    <section className="grid items-center gap-12 lg:grid-cols-2">
+      <div className="space-y-8">
+        <div className="flex items-center gap-3">
+          <div className="flex h-7 w-7 items-center justify-center bg-fg text-bg">
+            <Zap size={14} strokeWidth={1.6} />
+          </div>
+          <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg">
+            {t.overview.label}
+          </span>
+        </div>
+
+        <h1 className="font-serif text-5xl italic leading-[0.95] tracking-tight text-fg sm:text-6xl lg:text-7xl">
+          {t.overview.title[0]}<br />{t.overview.title[1]}<br />{t.overview.title[2]}
+        </h1>
+
+        <p className="max-w-xl border-l-2 border-fg pl-5 font-serif text-lg italic leading-relaxed text-fg-muted">
+          {t.overview.tagline}
+        </p>
+
+        <div className="flex flex-wrap gap-3 pt-2">
+          <Link
+            to="/network"
+            className="inline-flex items-center gap-3 bg-fg px-6 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-bg transition-opacity hover:opacity-90"
+          >
+            <Activity size={14} strokeWidth={1.6} />
+            {t.overview.cta.monitor}
+          </Link>
+          <Link
+            to="/methodology"
+            className="inline-flex items-center gap-3 border border-fg px-6 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg transition-colors hover:bg-fg hover:text-bg"
+          >
+            <Info size={14} strokeWidth={1.6} />
+            {t.overview.cta.methodology}
+          </Link>
+        </div>
+      </div>
+
+      <TopologyCard />
+    </section>
+  );
+};
 
 const Pending = () => <Skeleton className="h-5 w-16" />;
 
 const KpiBar = ({ kpi }: { kpi: OverviewKpi | null }) => {
+  const { t } = useI18n();
   const renewableMw = kpi
     ? sum([kpi.solar_mw, kpi.wind_mw, kpi.hydro_mw])
     : null;
@@ -131,15 +138,15 @@ const KpiBar = ({ kpi }: { kpi: OverviewKpi | null }) => {
 
   return (
     <section className="space-y-6">
-      <SectionHeader number="01" title="System Snapshot" />
+      <SectionHeader number="01" title={t.overview.sections.snapshot} />
       <div className="flex gap-3 overflow-x-auto pb-1 lg:grid lg:grid-cols-6 lg:overflow-visible">
-        <KpiCard label="Buses" value={kpi?.bus_count ?? <Pending />} icon={Network} />
-        <KpiCard label="Generators" value={kpi?.gen_count ?? <Pending />} icon={Zap} />
-        <KpiCard label="AC Branches" value={kpi?.branch_count ?? <Pending />} icon={GitBranch} />
-        <KpiCard label="HVDC Links" value={kpi?.dc_count ?? <Pending />} icon={GitBranch} />
-        <KpiCard label="Profile" value="8,760" unit="h" icon={Activity} />
+        <KpiCard label={t.overview.kpi.buses} value={kpi?.bus_count ?? <Pending />} icon={Network} />
+        <KpiCard label={t.overview.kpi.generators} value={kpi?.gen_count ?? <Pending />} icon={Zap} />
+        <KpiCard label={t.overview.kpi.ac} value={kpi?.branch_count ?? <Pending />} icon={GitBranch} />
+        <KpiCard label={t.overview.kpi.hvdc} value={kpi?.dc_count ?? <Pending />} icon={GitBranch} />
+        <KpiCard label={t.overview.kpi.profile} value="8,760" unit="h" icon={Activity} />
         <KpiCard
-          label="Renewable"
+          label={t.overview.kpi.renewable}
           value={renewablePct ?? <Pending />}
           unit={renewablePct ? '%' : undefined}
           icon={Database}
@@ -150,12 +157,13 @@ const KpiBar = ({ kpi }: { kpi: OverviewKpi | null }) => {
 };
 
 const GenerationMix = ({ rows }: { rows: GenerationMixRow[] | null }) => {
+  const { t } = useI18n();
   const mixMap = rows ? Object.fromEntries(rows.map((r) => [r.fuel, r.mw])) : null;
   const totalMw = mixMap ? sum(Object.values(mixMap)) : null;
 
   return (
     <section className="space-y-6">
-      <SectionHeader number="02" title="Generation Mix" />
+      <SectionHeader number="02" title={t.overview.sections.mix} />
       <div className="space-y-3 border border-border bg-bg-elev p-6">
         {MIX_FUEL_ORDER.map((key) => {
           const mw = mixMap?.[key];
@@ -190,17 +198,20 @@ const GenerationMix = ({ rows }: { rows: GenerationMixRow[] | null }) => {
   );
 };
 
-const TemporalStrip = () => (
-  <section className="space-y-6">
-    <SectionHeader number="03" title="Temporal Coverage" />
-    <div className="border border-border bg-bg-elev p-6">
-      <Sparkline />
-      <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.2em] text-fg-subtle">
-        Hourly demand · 365 days · 8,760 hours
-      </p>
-    </div>
-  </section>
-);
+const TemporalStrip = () => {
+  const { t } = useI18n();
+  return (
+    <section className="space-y-6">
+      <SectionHeader number="03" title={t.overview.sections.coverage} />
+      <div className="border border-border bg-bg-elev p-6">
+        <Sparkline />
+        <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.2em] text-fg-subtle">
+          {t.overview.coverageCaption}
+        </p>
+      </div>
+    </section>
+  );
+};
 
 export const OverviewPage = () => {
   const kpi = useQuery<OverviewKpi>(overviewKpiSQL);
