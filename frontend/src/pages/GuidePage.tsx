@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Terminal } from 'lucide-react';
 import { cn } from '../lib/cn';
+import { useI18n } from '../hooks/useI18n';
 
 type Lang = 'julia' | 'python' | 'matlab';
 
@@ -125,6 +126,7 @@ end`,
 };
 
 export const GuidePage = () => {
+  const { t } = useI18n();
   const [active, setActive] = useState<Lang>('python');
   const [copied, setCopied] = useState<string | null>(null);
 
@@ -142,14 +144,13 @@ export const GuidePage = () => {
     <div className="space-y-12">
       <header className="space-y-3">
         <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg-subtle">
-          Implementation_Guide
+          {t.guide.label}
         </span>
         <h1 className="font-serif text-4xl italic leading-none tracking-tight text-fg sm:text-5xl">
-          Guide.
+          {t.guide.title}
         </h1>
         <p className="max-w-2xl border-l-2 border-fg pl-4 font-serif text-base italic text-fg-muted">
-          연구 환경에서 KPG 193 데이터셋을 빠르게 로드하기 위한 예제. 본
-          사이트의 Parquet 사본은 정밀도가 DECIMAL(28, 12)로 보존됨.
+          {t.guide.tagline}
         </p>
       </header>
 
@@ -186,7 +187,7 @@ export const GuidePage = () => {
               onClick={() => copy(`${active}-${i}`, snip.body)}
               className="absolute right-3 top-3 z-10 border border-border bg-bg-elev px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-fg-muted transition-colors hover:bg-fg hover:text-bg"
             >
-              {copied === `${active}-${i}` ? 'copied ✓' : 'copy'}
+              {copied === `${active}-${i}` ? t.guide.copied : t.guide.copy}
             </button>
             <pre className="overflow-x-auto border border-border bg-bg p-5 pr-24 font-mono text-[12px] leading-relaxed text-fg">
               {snip.body}
@@ -196,10 +197,9 @@ export const GuidePage = () => {
       ))}
 
       <section className="border border-border bg-bg-elev p-6">
-        <h3 className="mb-2 font-serif text-xl italic text-fg">Reference UC Solutions</h3>
+        <h3 className="mb-2 font-serif text-xl italic text-fg">{t.guide.referenceUcTitle}</h3>
         <p className="font-serif text-sm italic text-fg-muted">
-          데이터셋에는 tight MILP 솔버로 계산된 참조 UC 해가 포함됩니다. 본인의
-          최적화 알고리즘 결과와 비교하여 정확도·성능을 벤치마크할 수 있습니다.
+          {t.guide.referenceUcBody}
         </p>
       </section>
     </div>

@@ -1,4 +1,5 @@
 import { Database, Download, FileText } from 'lucide-react';
+import { useI18n } from '../hooks/useI18n';
 
 interface Column {
   name: string;
@@ -161,27 +162,28 @@ const DATASETS: Dataset[] = [
 
 const fmt = (n: number) => n.toLocaleString('en-US');
 
-export const DataPage = () => (
+export const DataPage = () => {
+  const { t } = useI18n();
+  return (
   <div className="space-y-12">
     <header className="space-y-3">
       <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg-subtle">
-        Data_Catalog
+        {t.data.label}
       </span>
       <h1 className="font-serif text-4xl italic leading-none tracking-tight text-fg sm:text-5xl">
-        Data.
+        {t.data.title}
       </h1>
       <p className="max-w-2xl border-l-2 border-fg pl-4 font-serif text-base italic text-fg-muted">
-        Parquet 13개 (zstd 압축, DECIMAL(28, 12) 정밀도 보존). 모두 ODbL 1.0
-        라이선스 하에 자유롭게 사용·재배포 가능.
+        {t.data.tagline}
       </p>
     </header>
 
     <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {[
-        ['Files', '13'],
-        ['Total Rows', '~6.1M'],
-        ['Total Size', '70.7 MB'],
-        ['License', 'ODbL 1.0'],
+        [t.data.files, '13'],
+        [t.data.totalRows, '~6.1M'],
+        [t.data.totalSize, '70.7 MB'],
+        [t.data.license, 'ODbL 1.0'],
       ].map(([label, value]) => (
         <div key={label} className="border border-border bg-bg-elev p-4">
           <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-fg-subtle">
@@ -197,7 +199,7 @@ export const DataPage = () => (
     <section className="space-y-4">
       <h2 className="flex items-center gap-3 font-serif text-2xl italic text-fg">
         <Database size={18} />
-        Datasets
+        {t.data.datasets}
       </h2>
 
       <div className="space-y-3">
@@ -210,7 +212,7 @@ export const DataPage = () => (
                   {ds.file}.parquet
                 </span>
                 <span className="font-mono text-[10px] tabular-nums text-fg-subtle">
-                  {fmt(ds.rows)} rows
+                  {fmt(ds.rows)} {t.data.rows}
                 </span>
               </div>
               <a
@@ -219,7 +221,7 @@ export const DataPage = () => (
                 className="inline-flex items-center gap-2 border border-fg bg-bg px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg transition-colors hover:bg-fg hover:text-bg"
               >
                 <Download size={11} />
-                Download
+                {t.common.download}
               </a>
             </header>
             <div className="px-5 py-3">
@@ -227,7 +229,7 @@ export const DataPage = () => (
             </div>
             <div className="border-t border-border bg-bg-subtle px-5 py-3">
               <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-fg-subtle">
-                Columns
+                {t.data.columns}
               </div>
               <ul className="mt-2 grid gap-x-6 gap-y-1 sm:grid-cols-2">
                 {ds.columns.map((c) => (
@@ -250,10 +252,9 @@ export const DataPage = () => (
     </section>
 
     <section className="border border-border bg-bg-elev p-6">
-      <h3 className="mb-3 font-serif text-xl italic text-fg">Conversion Pipeline</h3>
+      <h3 className="mb-3 font-serif text-xl italic text-fg">{t.data.pipelineTitle}</h3>
       <p className="mb-3 font-mono text-[11px] text-fg-muted">
-        Original CSV/MATPOWER (231 MB) → Python script (pyarrow + scipy) → Parquet
-        (70.7 MB, zstd-15).
+        {t.data.pipelineBody}
       </p>
       <pre className="overflow-x-auto bg-bg p-4 font-mono text-[11px] leading-relaxed text-fg">
 {`# scripts/convert_to_parquet.py
@@ -265,4 +266,5 @@ python scripts/convert_to_parquet.py`}
       </pre>
     </section>
   </div>
-);
+  );
+};

@@ -23,6 +23,7 @@ import { useTheme } from '../hooks/useTheme';
 import { getFuelIconUrl, FUEL_ICON_SIZE, FUEL_ICON_SVG } from '../lib/fuelIcons';
 import { generateAllPieIcons, type PieIcon } from '../lib/pieIcon';
 import { cn } from '../lib/cn';
+import { useI18n } from '../hooks/useI18n';
 
 const INITIAL_VIEW = {
   longitude: 127.8,
@@ -66,6 +67,7 @@ const busLabel = (id: number, name: string) => `#${String(id).padStart(3, '0')}.
 
 export const NetworkPage = () => {
   const { theme } = useTheme();
+  const { t } = useI18n();
   const buses = useQuery<NetworkBus>(networkBusesSQL);
   const branches = useQuery<NetworkBranch>(networkBranchesSQL);
   const dcLines = useQuery<NetworkDcLine>(networkDcLinesSQL);
@@ -296,12 +298,12 @@ export const NetworkPage = () => {
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
                 </span>
                 <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg">
-                  Network_Live
+                  {t.network.networkLive}
                 </span>
               </div>
               {isLoading && (
                 <div className="mt-2 font-mono text-[10px] text-fg-muted">
-                  loading parquet …
+                  {t.network.loadingParquet}
                 </div>
               )}
               {error && (
@@ -314,7 +316,7 @@ export const NetworkPage = () => {
 
           <div className="absolute bottom-5 left-5 border border-border bg-bg-elev/90 p-4 backdrop-blur">
             <div className="mb-3 border-b border-border pb-2 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg">
-              Legend
+              {t.network.legend}
             </div>
             <div className="space-y-2 font-mono text-[10px] text-fg-muted">
               <div className="flex items-center gap-3">
@@ -335,7 +337,7 @@ export const NetworkPage = () => {
               </div>
               <div className="mt-2 border-t border-border pt-2">
                 <div className="mb-1.5 text-[9px] uppercase tracking-[0.2em] text-fg">
-                  Generators
+                  {t.network.generators}
                 </div>
                 <div className="flex gap-1">
                   {(['off', 'icons', 'pie'] as const).map((mode) => (
@@ -356,19 +358,19 @@ export const NetworkPage = () => {
               </div>
               {genView === 'icons' && (
                 <>
-                  <FuelLegendRow fuel="nuclear" label="Nuclear" />
-                  <FuelLegendRow fuel="coal" label="Coal" />
-                  <FuelLegendRow fuel="lng" label="LNG" />
+                  <FuelLegendRow fuel="nuclear" label={t.network.nuclear} />
+                  <FuelLegendRow fuel="coal" label={t.network.coal} />
+                  <FuelLegendRow fuel="lng" label={t.network.lng} />
                 </>
               )}
               {genView === 'pie' && (
                 <>
-                  <FuelLegendRow fuel="nuclear" label="Nuclear" />
-                  <FuelLegendRow fuel="coal" label="Coal" />
-                  <FuelLegendRow fuel="lng" label="LNG" />
-                  <FuelLegendRow fuel="solar" label="Solar" />
-                  <FuelLegendRow fuel="wind" label="Wind" />
-                  <FuelLegendRow fuel="hydro" label="Hydro" />
+                  <FuelLegendRow fuel="nuclear" label={t.network.nuclear} />
+                  <FuelLegendRow fuel="coal" label={t.network.coal} />
+                  <FuelLegendRow fuel="lng" label={t.network.lng} />
+                  <FuelLegendRow fuel="solar" label={t.network.solar} />
+                  <FuelLegendRow fuel="wind" label={t.network.wind} />
+                  <FuelLegendRow fuel="hydro" label={t.network.hydro} />
                 </>
               )}
             </div>
@@ -406,13 +408,13 @@ export const NetworkPage = () => {
         <aside className="flex max-h-[40vh] w-full flex-col border-t border-border bg-bg lg:max-h-none lg:w-[380px] lg:border-l lg:border-t-0">
           <div className="border-b border-border bg-bg-subtle p-5">
             <span className="bg-fg px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-bg">
-              {selection?.kind === 'branch' ? 'Branch_Inspector' : 'Node_Inspector'}
+              {selection?.kind === 'branch' ? t.network.inspectorBranch : t.network.inspectorNode}
             </span>
             <h2 className="mt-3 font-serif text-2xl italic uppercase leading-none tracking-tight text-fg">
-              Terminal
+              {t.network.panelLabel}
             </h2>
             <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.2em] text-fg-subtle">
-              {selection ? 'tap map to switch' : 'select node or branch'}
+              {selection ? t.common.selectBranch : t.common.selectNode}
             </p>
           </div>
 

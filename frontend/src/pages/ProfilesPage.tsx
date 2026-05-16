@@ -16,6 +16,7 @@ import { LineSeriesChart } from '../components/charts/LineSeriesChart';
 import { FUEL_COLORS_HEX, FUEL_LABELS } from '../lib/constants';
 import { toRounded } from '../utils/decimal';
 import { Skeleton } from '../components/ui/Skeleton';
+import { useI18n } from '../hooks/useI18n';
 
 const dayToDate = (day: number): string => {
   const d = new Date(2022, 0, 1);
@@ -26,6 +27,7 @@ const dayToDate = (day: number): string => {
 const MONTH_DAYS = [1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335];
 
 export const ProfilesPage = () => {
+  const { t } = useI18n();
   const [day, setDay] = useState(1);
   const [busId, setBusId] = useState<number | null>(null);
 
@@ -86,14 +88,13 @@ export const ProfilesPage = () => {
     <div className="space-y-12">
       <header className="space-y-3">
         <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg-subtle">
-          Temporal_Profiles
+          {t.profiles.label}
         </span>
         <h1 className="font-serif text-4xl italic leading-none tracking-tight text-fg sm:text-5xl">
-          Profiles.
+          {t.profiles.title}
         </h1>
         <p className="max-w-2xl border-l-2 border-fg pl-4 font-serif text-base italic text-fg-muted">
-          8,760 hours of demand, renewables, and unit commitment. Scrub the day
-          slider to inspect any 24-hour window.
+          {t.profiles.tagline}
         </p>
       </header>
 
@@ -102,12 +103,12 @@ export const ProfilesPage = () => {
           <div className="flex items-center justify-between">
             <div>
               <div className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg-subtle">
-                Scope
+                {t.profiles.scope}
               </div>
               <div className="mt-1 font-mono text-base font-bold text-fg">
                 {selectedBus
                   ? `#${String(selectedBus.id).padStart(3, '0')}. ${selectedBus.name_kr}`
-                  : 'System-wide (193 buses)'}
+                  : t.profiles.systemWide}
               </div>
               {selectedBus && (
                 <div className="mt-0.5 font-mono text-[10px] text-fg-muted">
@@ -119,7 +120,7 @@ export const ProfilesPage = () => {
               <button
                 onClick={() => setBusId(null)}
                 className="border border-border p-1.5 text-fg-muted transition-colors hover:bg-fg hover:text-bg"
-                title="Clear filter"
+                title={t.profiles.clearFilter}
               >
                 <X size={12} />
               </button>
@@ -130,7 +131,7 @@ export const ProfilesPage = () => {
             onChange={(e) => setBusId(e.target.value === '' ? null : parseInt(e.target.value))}
             className="mt-4 w-full border border-border bg-bg p-2 font-mono text-xs text-fg"
           >
-            <option value="">— all buses (sum) —</option>
+            <option value="">{t.profiles.allBuses}</option>
             {busList.data?.map((b) => (
               <option key={b.id} value={b.id}>
                 #{String(b.id).padStart(3, '0')}. {b.name_kr} / {b.name_en}
@@ -143,7 +144,7 @@ export const ProfilesPage = () => {
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <div>
             <div className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg-subtle">
-              Selected_Day
+              {t.profiles.selectedDay}
             </div>
             <div className="mt-1 flex items-baseline gap-3">
               <span className="font-mono text-3xl font-bold tabular-nums text-fg">
@@ -220,13 +221,13 @@ export const ProfilesPage = () => {
 
       <ChartCard
         number="01"
-        title="System Demand"
+        title={t.profiles.systemDemand}
         icon={Activity}
         right={
           peak && (
             <div className="text-right">
               <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-fg-subtle">
-                Peak
+                {t.profiles.peak}
               </div>
               <div className="font-mono text-sm tabular-nums text-fg">
                 {toRounded(peak.total_exact, 0, { grouping: true })} MW @ {peak.hour}:00
@@ -250,7 +251,7 @@ export const ProfilesPage = () => {
 
       <ChartCard
         number="02"
-        title="Renewable Capacity Factor"
+        title={t.profiles.renewableCF}
         icon={Sun}
         right={
           <LegendInline
@@ -277,7 +278,7 @@ export const ProfilesPage = () => {
 
       <ChartCard
         number="03"
-        title={`Thermal Commitment (Reference UC)${busId !== null ? ' · system-wide' : ''}`}
+        title={`${t.profiles.thermalCommit}${busId !== null ? t.profiles.thermalCommitSystem : ''}`}
         icon={Flame}
         right={
           <LegendInline
@@ -300,14 +301,14 @@ export const ProfilesPage = () => {
           )}
           {commitment.data && commitment.data.length === 0 && (
             <div className="flex h-full items-center justify-center font-mono text-[11px] text-fg-subtle">
-              No commitment data for this day.
+              {t.profiles.noCommitData}
             </div>
           )}
         </div>
       </ChartCard>
 
       <p className="text-center font-mono text-[10px] uppercase tracking-[0.2em] text-fg-subtle">
-        Data source · KPG 193 v1.5 · 8,760 h / 365 d × 24 h × 193 buses
+        {t.profiles.dataSource}
       </p>
     </div>
   );
