@@ -16,3 +16,11 @@ node_modules/
 # Build output
 dist/
 build/
+
+# Original dataset (231MB) — Parquet 변환본만 커밋
+kpg193_v1_5/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
