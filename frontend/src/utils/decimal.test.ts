@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { D, sum, mul, div, ratio, toExact, toDisplay, toRounded, toTruncated, isExact } from './decimal';
+import { D, sum, mul, div, ratio, toExact, toDisplay, toRounded, toTruncated, isExact, formatByMode } from './decimal';
 
 describe('D() — 정밀도 보존 파싱', () => {
   it('문자열 입력은 원본 정밀도를 그대로 유지한다', () => {
@@ -94,6 +94,23 @@ describe('toRounded() — 명시적 반올림 (표시 전용)', () => {
 describe('toTruncated() — 명시적 절사 (표시 전용)', () => {
   it('지정 자릿수에서 절사한다', () => {
     expect(toTruncated('123.999', 2)).toBe('123.99');
+  });
+});
+
+describe('formatByMode() — 전역 모드 따른 표시', () => {
+  it('exact 모드는 원본 정밀도 유지', () => {
+    expect(formatByMode('123.456789', 'exact')).toBe('123.456789');
+  });
+
+  it('숫자 모드는 그만큼 자릿수로 반올림', () => {
+    expect(formatByMode('123.456', '0')).toBe('123');
+    expect(formatByMode('123.456', '1')).toBe('123.5');
+    expect(formatByMode('123.456', '2')).toBe('123.46');
+    expect(formatByMode('123.456', '3')).toBe('123.456');
+  });
+
+  it('grouping/suffix 옵션 전달', () => {
+    expect(formatByMode('1234567.89', '1', { grouping: true, suffix: ' MW' })).toBe('1,234,567.9 MW');
   });
 });
 
