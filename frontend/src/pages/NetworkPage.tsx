@@ -74,7 +74,7 @@ export const NetworkPage = () => {
   const dcLines = useQuery<NetworkDcLine>(networkDcLinesSQL);
   const generators = useQuery<NetworkGenerator>(networkGeneratorsSQL);
   const genMix = useQuery<NetworkBusGenMix>(networkGenerationMixSQL);
-  const [genView, setGenView] = useState<'base' | 'icons' | 'pie'>('base');
+  const [genView, setGenView] = useState<'off' | 'base' | 'icons' | 'pie'>('base');
 
   const [selection, setSelection] = useState<Selection>(null);
   const [hoverInfo, setHoverInfo] = useState<PickingInfo | null>(null);
@@ -90,16 +90,8 @@ export const NetworkPage = () => {
     return generateAllPieIcons(genMix.data);
   }, [genMix.data, genView]);
 
-  // 모드별로 base 버스에서 가릴 ID 집합
-  const hiddenBusIds = useMemo<Set<number>>(() => {
-    if (genView === 'icons' && generators.data) {
-      return new Set(generators.data.map((g) => g.bus_id));
-    }
-    if (genView === 'pie') {
-      return new Set(pieIcons.map((p) => p.bus_id));
-    }
-    return new Set();
-  }, [genView, generators.data, pieIcons]);
+  // base 모드일 때만 버스를 표시 (off/icons/pie에서는 그리지 않음)
+  const showBuses = genView === 'base';
 
   const layers = useMemo(() => {
     const out: unknown[] = [];
@@ -143,7 +135,7 @@ export const NetworkPage = () => {
       }
     }
 
-    if (genView === 'icons' && generators.data) {
+    if (genView === 'icons' && generators.data && generators.data.length > 0) {
       const grouped = new Map<string, NetworkGenerator[]>();
       generators.data.forEach((g) => {
         const key = `${g.bus_id}-${g.fuel}`;
@@ -220,12 +212,11 @@ export const NetworkPage = () => {
       );
     }
 
-    if (buses.data) {
-      const visibleBuses = buses.data.filter((b) => !hiddenBusIds.has(b.id));
+    if (buses.data && showBuses) {
       out.push(
         new ScatterplotLayer({
           id: 'buses',
-          data: visibleBuses,
+          data: buses.data,
           getPosition: (d: NetworkBus) => [d.lng, d.lat],
           getRadius: (d: NetworkBus) => voltageRadius(d.kv),
           radiusMinPixels: 3,
@@ -243,46 +234,47 @@ export const NetworkPage = () => {
           onHover: (info: PickingInfo) => setHoverInfo(info),
         }),
       );
+    }
 
-      if (selectedBusId !== null) {
-        const bus = busMap.get(selectedBusId);
-        if (bus) {
-          out.push(
-            new ScatterplotLayer({
-              id: 'selected-bus-ring',
-              data: [bus],
-              getPosition: (d: NetworkBus) => [d.lng, d.lat],
-              getRadius: 16000,
-              radiusMinPixels: 16,
-              radiusMaxPixels: 32,
-              getFillColor: [...SELECTED, 40],
-              getLineColor: [...SELECTED, 255],
-              getLineWidth: 2.5,
-              lineWidthUnits: 'pixels',
-              stroked: true,
-              pickable: false,
-            }),
-            new ScatterplotLayer({
-              id: 'selected-bus-dot',
-              data: [bus],
-              getPosition: (d: NetworkBus) => [d.lng, d.lat],
-              getRadius: (d: NetworkBus) => voltageRadius(d.kv) * 1.5,
-              radiusMinPixels: 5,
-              radiusMaxPixels: 18,
-              getFillColor: [...SELECTED, 255],
-              getLineColor: [255, 255, 255, 255],
-              getLineWidth: 2,
-              lineWidthUnits: 'pixels',
-              stroked: true,
-              pickable: false,
-            }),
-          );
-        }
+    // 선택된 버스 하이라이트 — 모든 모드에서 표시 (off 포함)
+    if (selectedBusId !== null) {
+      const bus = busMap.get(selectedBusId);
+      if (bus) {
+        out.push(
+          new ScatterplotLayer({
+            id: 'selected-bus-ring',
+            data: [bus],
+            getPosition: (d: NetworkBus) => [d.lng, d.lat],
+            getRadius: 16000,
+            radiusMinPixels: 16,
+            radiusMaxPixels: 32,
+            getFillColor: [...SELECTED, 40],
+            getLineColor: [...SELECTED, 255],
+            getLineWidth: 2.5,
+            lineWidthUnits: 'pixels',
+            stroked: true,
+            pickable: false,
+          }),
+          new ScatterplotLayer({
+            id: 'selected-bus-dot',
+            data: [bus],
+            getPosition: (d: NetworkBus) => [d.lng, d.lat],
+            getRadius: (d: NetworkBus) => voltageRadius(d.kv) * 1.5,
+            radiusMinPixels: 5,
+            radiusMaxPixels: 18,
+            getFillColor: [...SELECTED, 255],
+            getLineColor: [255, 255, 255, 255],
+            getLineWidth: 2,
+            lineWidthUnits: 'pixels',
+            stroked: true,
+            pickable: false,
+          }),
+        );
       }
     }
 
     return { out, selectedBranchKey };
-  }, [buses.data, branches.data, dcLines.data, generators.data, pieIcons, genView, hiddenBusIds, selection, busMap]);
+  }, [buses.data, branches.data, dcLines.data, generators.data, pieIcons, genView, showBuses, selection, busMap]);
 
   const isLoading = buses.loading || branches.loading || dcLines.loading;
   const error = buses.error || branches.error || dcLines.error;
@@ -360,7 +352,7 @@ export const NetworkPage = () => {
                   {t.network.generators}
                 </div>
                 <div className="flex gap-1">
-                  {(['base', 'icons', 'pie'] as const).map((mode) => (
+                  {(['off', 'base', 'icons', 'pie'] as const).map((mode) => (
                     <button
                       key={mode}
                       onClick={() => setGenView(mode)}
@@ -807,7 +799,7 @@ const FuelLegendRow = ({
 }) => (
   <div className="flex items-center gap-3">
     <span
-      className="inline-block h-4 w-4 shrink-0"
+      className="inline-block h-4 w-4 shrink-0 [&>svg]:h-full [&>svg]:w-full"
       dangerouslySetInnerHTML={{ __html: FUEL_ICON_SVG[fuel] }}
     />
     {label}
