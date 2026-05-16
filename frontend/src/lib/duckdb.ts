@@ -37,6 +37,8 @@ export const query = async <T = Row>(sql: string): Promise<T[]> => {
   }
 };
 
-const PARQUET_BASE = `${import.meta.env.BASE_URL}data`;
-
-export const parquetUrl = (name: string): string => `${PARQUET_BASE}/${name}.parquet`;
+export const parquetUrl = (name: string): string => {
+  const base = import.meta.env.BASE_URL;
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  return `${origin}${base}data/${name}.parquet`;
+};
