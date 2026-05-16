@@ -23,6 +23,7 @@ export interface Translation {
     coordinates: string;
     branches: string;
     designation: string;
+    dataLoadError: string;
   };
   overview: {
     label: string;
@@ -144,6 +145,7 @@ const ko: Translation = {
     coordinates: '좌표',
     branches: '브랜치',
     designation: '명칭',
+    dataLoadError: '데이터 로드 실패',
   },
   overview: {
     label: 'Kernel_Core_Access',
@@ -292,6 +294,7 @@ const en: Translation = {
     coordinates: 'Coordinates',
     branches: 'Branches',
     designation: 'Designation',
+    dataLoadError: 'Failed to load data',
   },
   overview: {
     label: 'Kernel_Core_Access',

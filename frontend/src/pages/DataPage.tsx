@@ -1,169 +1,134 @@
 import { Database, Download, FileText } from 'lucide-react';
 import { useI18n } from '../hooks/useI18n';
+import type { Locale } from '../i18n/translations';
+
+interface LocalizedString {
+  ko: string;
+  en: string;
+}
 
 interface Column {
   name: string;
   type: string;
-  note?: string;
+  note?: LocalizedString;
 }
 
 interface Dataset {
   file: string;
   rows: number;
-  description: string;
+  description: LocalizedString;
   columns: Column[];
 }
 
+const ds = (file: string, rows: number, descKo: string, descEn: string, columns: Column[]): Dataset => ({
+  file,
+  rows,
+  description: { ko: descKo, en: descEn },
+  columns,
+});
+
+const note = (ko: string, en: string): LocalizedString => ({ ko, en });
+
 const DATASETS: Dataset[] = [
-  {
-    file: 'buses',
-    rows: 193,
-    description: 'MATPOWER bus matrix — 모선 매개변수 (전압, 부하, 영역)',
-    columns: [
-      { name: 'bus_i', type: 'DECIMAL', note: 'bus ID 1-193' },
-      { name: 'type', type: 'DECIMAL', note: '1=PQ, 2=PV, 3=slack' },
-      { name: 'Pd', type: 'DECIMAL', note: 'active demand MW' },
-      { name: 'Qd', type: 'DECIMAL', note: 'reactive demand MVAr' },
-      { name: 'baseKV', type: 'DECIMAL', note: '154 / 345 / 765' },
-      { name: 'area', type: 'DECIMAL', note: '1-5 지역 클러스터' },
-      { name: 'Vm / Va', type: 'DECIMAL', note: '전압 크기·위상' },
-      { name: 'Vmax / Vmin', type: 'DECIMAL', note: '허용 범위' },
-    ],
-  },
-  {
-    file: 'bus_location',
-    rows: 193,
-    description: '버스 위치 (좌표 + 한·영 명칭)',
-    columns: [
-      { name: 'bus_id', type: 'INT64' },
-      { name: 'Latitude', type: 'DECIMAL', note: '위도' },
-      { name: 'Longitude', type: 'DECIMAL', note: '경도' },
-      { name: 'name_Korean', type: 'STRING' },
-      { name: 'name_English', type: 'STRING' },
-    ],
-  },
-  {
-    file: 'generators',
-    rows: 122,
-    description: 'MATPOWER gen matrix + fuel 컬럼 (.m 주석에서 추출)',
-    columns: [
-      { name: 'bus', type: 'DECIMAL', note: '연결 모선' },
-      { name: 'Pmax / Pmin', type: 'DECIMAL', note: '용량 MW' },
-      { name: 'Qmax / Qmin', type: 'DECIMAL' },
-      { name: 'ramp_*', type: 'DECIMAL', note: '램프 제약' },
-      { name: 'fuel', type: 'STRING', note: 'coal / lng / nuclear' },
-    ],
-  },
-  {
-    file: 'branches',
-    rows: 358,
-    description: 'AC 송전선 (R, X, B, 정격)',
-    columns: [
-      { name: 'fbus / tbus', type: 'DECIMAL' },
-      { name: 'r / x / b', type: 'DECIMAL', note: '임피던스 pu' },
-      { name: 'rateA / B / C', type: 'DECIMAL', note: '정상/단기/응급 MVA' },
-      { name: 'status', type: 'DECIMAL', note: '0=open, 1=closed' },
-    ],
-  },
-  {
-    file: 'dc_lines',
-    rows: 1,
-    description: 'HVDC 라인 (500 kV)',
-    columns: [
-      { name: 'fbus / tbus', type: 'DECIMAL' },
-      { name: 'Pmax', type: 'DECIMAL', note: '전송 한도' },
-    ],
-  },
-  {
-    file: 'capacity_solar',
-    rows: 193,
-    description: '버스별 태양광 설비용량',
-    columns: [
-      { name: 'bus_ID', type: 'INT64' },
-      { name: 'Type', type: 'STRING' },
-      { name: 'Pmax [MW]', type: 'DECIMAL' },
-      { name: 'Pmin [MW]', type: 'INT64' },
-    ],
-  },
-  {
-    file: 'capacity_wind',
-    rows: 193,
-    description: '버스별 풍력 설비용량',
-    columns: [
-      { name: 'bus_ID', type: 'INT64' },
-      { name: 'Pmax [MW]', type: 'DECIMAL' },
-    ],
-  },
-  {
-    file: 'capacity_hydro',
-    rows: 193,
-    description: '버스별 수력 설비용량',
-    columns: [
-      { name: 'bus_ID', type: 'INT64' },
-      { name: 'Pmax [MW]', type: 'DECIMAL' },
-    ],
-  },
-  {
-    file: 'nuclear_mustoff',
-    rows: 22,
-    description: '원전 계획예방정비 일정 (must-off)',
-    columns: [
-      { name: 'generator_id', type: 'INT64' },
-      { name: 'start / end', type: 'INT64', note: 'day-of-year' },
-    ],
-  },
-  {
-    file: 'profile_demand',
-    rows: 1_690_680,
-    description: '시간별 수요 (day × hour × bus × 193) — 365 × 24 × 193',
-    columns: [
-      { name: 'day', type: 'INT16', note: '1-365' },
-      { name: 'hour', type: 'INT64', note: '1-24' },
-      { name: 'bus_id', type: 'INT64' },
-      { name: 'demandP', type: 'DECIMAL', note: 'MW' },
-      { name: 'demandQ', type: 'DECIMAL', note: 'MVAr' },
-    ],
-  },
-  {
-    file: 'profile_renewables',
-    rows: 1_690_680,
-    description: '재생에너지 시간별 용량계수 (0-1)',
-    columns: [
-      { name: 'day / hour / bus_id', type: 'INT' },
-      { name: 'pv_profile_ratio', type: 'DECIMAL' },
-      { name: 'wind_profile_ratio', type: 'DECIMAL' },
-      { name: 'hydro_profile_ratio', type: 'DECIMAL' },
-    ],
-  },
-  {
-    file: 'profile_weather',
-    rows: 1_690_680,
-    description: 'LDAPS 기상 데이터 (장파복사, 기온, 풍속)',
-    columns: [
-      { name: 'day / hour / bus_id', type: 'INT' },
-      { name: 'net_downward_longwave_flux_W/m^2', type: 'DECIMAL' },
-      { name: 'temperature_2m_K', type: 'DECIMAL' },
-      { name: 'wind_u_93m_m/s', type: 'DECIMAL' },
-      { name: 'wind_v_93m_m/s', type: 'DECIMAL' },
-      { name: 'wind_speed_93m_m/s', type: 'DECIMAL' },
-    ],
-  },
-  {
-    file: 'profile_commitment',
-    rows: 1_068_720,
-    description: '참조 UC 해 (단위 약정 결정)',
-    columns: [
-      { name: 'day / hour', type: 'INT' },
-      { name: 'generator_id', type: 'INT64', note: '1-122' },
-      { name: 'status', type: 'INT64', note: '0=off, 1=on' },
-    ],
-  },
+  ds('buses', 193, 'MATPOWER bus matrix — 모선 매개변수 (전압, 부하, 영역)', 'MATPOWER bus matrix — bus parameters (voltage, load, area)', [
+    { name: 'bus_i', type: 'DECIMAL', note: note('bus ID 1-193', 'bus ID 1-193') },
+    { name: 'type', type: 'DECIMAL', note: note('1=PQ, 2=PV, 3=slack', '1=PQ, 2=PV, 3=slack') },
+    { name: 'Pd', type: 'DECIMAL', note: note('유효 부하 MW', 'active demand MW') },
+    { name: 'Qd', type: 'DECIMAL', note: note('무효 부하 MVAr', 'reactive demand MVAr') },
+    { name: 'baseKV', type: 'DECIMAL', note: note('154 / 345 / 765', '154 / 345 / 765') },
+    { name: 'area', type: 'DECIMAL', note: note('1-5 지역 클러스터', '1-5 regional cluster') },
+    { name: 'Vm / Va', type: 'DECIMAL', note: note('전압 크기·위상', 'voltage magnitude · angle') },
+    { name: 'Vmax / Vmin', type: 'DECIMAL', note: note('허용 범위', 'allowed range') },
+  ]),
+  ds('bus_location', 193, '버스 위치 (좌표 + 한·영 명칭)', 'Bus locations (coordinates + KR/EN names)', [
+    { name: 'bus_id', type: 'INT64' },
+    { name: 'Latitude', type: 'DECIMAL', note: note('위도', 'latitude') },
+    { name: 'Longitude', type: 'DECIMAL', note: note('경도', 'longitude') },
+    { name: 'name_Korean', type: 'STRING' },
+    { name: 'name_English', type: 'STRING' },
+  ]),
+  ds('generators', 122, 'MATPOWER gen matrix + fuel 컬럼 (.m 주석에서 추출)', 'MATPOWER gen matrix + fuel column (extracted from .m comments)', [
+    { name: 'bus', type: 'DECIMAL', note: note('연결 모선', 'connected bus') },
+    { name: 'Pmax / Pmin', type: 'DECIMAL', note: note('용량 MW', 'capacity MW') },
+    { name: 'Qmax / Qmin', type: 'DECIMAL' },
+    { name: 'ramp_*', type: 'DECIMAL', note: note('램프 제약', 'ramp limits') },
+    { name: 'fuel', type: 'STRING', note: note('coal / lng / nuclear', 'coal / lng / nuclear') },
+  ]),
+  ds('branches', 358, 'AC 송전선 (R, X, B, 정격)', 'AC transmission lines (R, X, B, rating)', [
+    { name: 'fbus / tbus', type: 'DECIMAL' },
+    { name: 'r / x / b', type: 'DECIMAL', note: note('임피던스 pu', 'impedance pu') },
+    { name: 'rateA / B / C', type: 'DECIMAL', note: note('정상/단기/응급 MVA', 'normal/short/emergency MVA') },
+    { name: 'status', type: 'DECIMAL', note: note('0=open, 1=closed', '0=open, 1=closed') },
+  ]),
+  ds('dc_lines', 1, 'HVDC 라인 (500 kV)', 'HVDC line (500 kV)', [
+    { name: 'fbus / tbus', type: 'DECIMAL' },
+    { name: 'Pmax', type: 'DECIMAL', note: note('전송 한도', 'transfer limit') },
+  ]),
+  ds('capacity_solar', 193, '버스별 태양광 설비용량', 'Solar capacity per bus', [
+    { name: 'bus_ID', type: 'INT64' },
+    { name: 'Type', type: 'STRING' },
+    { name: 'Pmax [MW]', type: 'DECIMAL' },
+    { name: 'Pmin [MW]', type: 'INT64' },
+  ]),
+  ds('capacity_wind', 193, '버스별 풍력 설비용량', 'Wind capacity per bus', [
+    { name: 'bus_ID', type: 'INT64' },
+    { name: 'Pmax [MW]', type: 'DECIMAL' },
+  ]),
+  ds('capacity_hydro', 193, '버스별 수력 설비용량', 'Hydro capacity per bus', [
+    { name: 'bus_ID', type: 'INT64' },
+    { name: 'Pmax [MW]', type: 'DECIMAL' },
+  ]),
+  ds('nuclear_mustoff', 22, '원전 계획예방정비 일정 (must-off)', 'Nuclear maintenance schedule (must-off)', [
+    { name: 'generator_id', type: 'INT64' },
+    { name: 'start / end', type: 'INT64', note: note('연중 일수', 'day-of-year') },
+  ]),
+  ds('profile_demand', 1_690_680, '시간별 수요 (day × hour × bus × 193) — 365 × 24 × 193', 'Hourly demand (day × hour × bus × 193) — 365 × 24 × 193', [
+    { name: 'day', type: 'INT16', note: note('1-365', '1-365') },
+    { name: 'hour', type: 'INT64', note: note('1-24', '1-24') },
+    { name: 'bus_id', type: 'INT64' },
+    { name: 'demandP', type: 'DECIMAL', note: note('MW', 'MW') },
+    { name: 'demandQ', type: 'DECIMAL', note: note('MVAr', 'MVAr') },
+  ]),
+  ds('profile_renewables', 1_690_680, '재생에너지 시간별 용량계수 (0-1)', 'Hourly renewable capacity factor (0-1)', [
+    { name: 'day / hour / bus_id', type: 'INT' },
+    { name: 'pv_profile_ratio', type: 'DECIMAL' },
+    { name: 'wind_profile_ratio', type: 'DECIMAL' },
+    { name: 'hydro_profile_ratio', type: 'DECIMAL' },
+  ]),
+  ds('profile_weather', 1_690_680, 'LDAPS 기상 데이터 (장파복사, 기온, 풍속)', 'LDAPS weather data (longwave flux, temperature, wind speed)', [
+    { name: 'day / hour / bus_id', type: 'INT' },
+    { name: 'net_downward_longwave_flux_W/m^2', type: 'DECIMAL' },
+    { name: 'temperature_2m_K', type: 'DECIMAL' },
+    { name: 'wind_u_93m_m/s', type: 'DECIMAL' },
+    { name: 'wind_v_93m_m/s', type: 'DECIMAL' },
+    { name: 'wind_speed_93m_m/s', type: 'DECIMAL' },
+  ]),
+  ds('profile_commitment', 1_068_720, '참조 UC 해 (단위 약정 결정)', 'Reference UC solution (unit commitment decisions)', [
+    { name: 'day / hour', type: 'INT' },
+    { name: 'generator_id', type: 'INT64', note: note('1-122', '1-122') },
+    { name: 'status', type: 'INT64', note: note('0=off, 1=on', '0=off, 1=on') },
+  ]),
 ];
 
 const fmt = (n: number) => n.toLocaleString('en-US');
+const pick = (s: LocalizedString | undefined, locale: Locale) => (s ? s[locale] : '');
+
+const PIPELINE_CODE_KO = `# scripts/convert_to_parquet.py
+# - DECIMAL(28, 12)로 모든 부동소수 컬럼 정밀도 보존
+# - MATPOWER .mat → buses / generators / branches / dc_lines
+# - .m 주석에서 fuel 추출 (coal / lng / nuclear)
+# - 365 일별 CSV → day 컬럼 추가 후 concat
+python scripts/convert_to_parquet.py`;
+
+const PIPELINE_CODE_EN = `# scripts/convert_to_parquet.py
+# - DECIMAL(28, 12) preserves precision for all float columns
+# - MATPOWER .mat → buses / generators / branches / dc_lines
+# - fuel extracted from .m comments (coal / lng / nuclear)
+# - 365 daily CSVs → concat with added day column
+python scripts/convert_to_parquet.py`;
 
 export const DataPage = () => {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   return (
   <div className="space-y-12">
     <header className="space-y-3">
@@ -203,20 +168,20 @@ export const DataPage = () => {
       </h2>
 
       <div className="space-y-3">
-        {DATASETS.map((ds) => (
-          <article key={ds.file} className="border border-border bg-bg-elev">
+        {DATASETS.map((d) => (
+          <article key={d.file} className="border border-border bg-bg-elev">
             <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-border px-5 py-4">
               <div className="flex items-baseline gap-3">
                 <FileText size={14} className="text-fg-subtle" />
                 <span className="font-mono text-sm font-bold text-fg">
-                  {ds.file}.parquet
+                  {d.file}.parquet
                 </span>
                 <span className="font-mono text-[10px] tabular-nums text-fg-subtle">
-                  {fmt(ds.rows)} {t.data.rows}
+                  {fmt(d.rows)} {t.data.rows}
                 </span>
               </div>
               <a
-                href={`${import.meta.env.BASE_URL}data/${ds.file}.parquet`}
+                href={`${import.meta.env.BASE_URL}data/${d.file}.parquet`}
                 download
                 className="inline-flex items-center gap-2 border border-fg bg-bg px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg transition-colors hover:bg-fg hover:text-bg"
               >
@@ -225,14 +190,14 @@ export const DataPage = () => {
               </a>
             </header>
             <div className="px-5 py-3">
-              <p className="font-serif text-sm italic text-fg-muted">{ds.description}</p>
+              <p className="font-serif text-sm italic text-fg-muted">{d.description[locale]}</p>
             </div>
             <div className="border-t border-border bg-bg-subtle px-5 py-3">
               <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-fg-subtle">
                 {t.data.columns}
               </div>
               <ul className="mt-2 grid gap-x-6 gap-y-1 sm:grid-cols-2">
-                {ds.columns.map((c) => (
+                {d.columns.map((c) => (
                   <li
                     key={c.name}
                     className="flex items-baseline gap-2 font-mono text-[11px]"
@@ -240,7 +205,7 @@ export const DataPage = () => {
                     <span className="text-fg">{c.name}</span>
                     <span className="text-fg-subtle">{c.type}</span>
                     {c.note && (
-                      <span className="ml-auto truncate text-fg-muted">{c.note}</span>
+                      <span className="ml-auto truncate text-fg-muted">{pick(c.note, locale)}</span>
                     )}
                   </li>
                 ))}
@@ -257,12 +222,7 @@ export const DataPage = () => {
         {t.data.pipelineBody}
       </p>
       <pre className="overflow-x-auto bg-bg p-4 font-mono text-[11px] leading-relaxed text-fg">
-{`# scripts/convert_to_parquet.py
-# - DECIMAL(28, 12)로 모든 부동소수 컬럼 정밀도 보존
-# - MATPOWER .mat → buses / generators / branches / dc_lines
-# - .m 주석에서 fuel 추출 (coal / lng / nuclear)
-# - 365 일별 CSV → day 컬럼 추가 후 concat
-python scripts/convert_to_parquet.py`}
+{locale === 'ko' ? PIPELINE_CODE_KO : PIPELINE_CODE_EN}
       </pre>
     </section>
   </div>

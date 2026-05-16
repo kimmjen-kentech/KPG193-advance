@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Terminal } from 'lucide-react';
 import { cn } from '../lib/cn';
 import { useI18n } from '../hooks/useI18n';
+import type { Locale } from '../i18n/translations';
 
 type Lang = 'julia' | 'python' | 'matlab';
 
@@ -11,16 +12,30 @@ const TABS: Array<{ id: Lang; label: string }> = [
   { id: 'matlab', label: 'MATLAB' },
 ];
 
-interface Snippet {
-  title: string;
-  body: string;
+interface LocalizedSnippet {
+  title: { ko: string; en: string };
+  body: { ko: string; en: string };
 }
 
-const SNIPPETS: Record<Lang, Snippet[]> = {
+const SNIPPETS: Record<Lang, LocalizedSnippet[]> = {
   julia: [
     {
-      title: 'Load Network (MATPOWER)',
-      body: `using MAT, DataFrames, CSV
+      title: { ko: '네트워크 로드 (MATPOWER)', en: 'Load Network (MATPOWER)' },
+      body: {
+        ko: `using MAT, DataFrames, CSV
+
+mpc = matread("kpg193_v1_5/network/mat/KPG193_ver1_5.mat")["mpc"]
+
+buses      = mpc["bus"]      # 193 × 13
+generators = mpc["gen"]      # 122 × 21
+branches   = mpc["branch"]   # 358 × 13
+genfuel    = mpc["genthermal"]  # 연료 정보 포함
+
+println("Loaded KPG 193 v1.5: \$(size(buses, 1)) buses")
+
+# 버스 위치
+locations = CSV.read("kpg193_v1_5/network/location/bus_location.csv", DataFrame)`,
+        en: `using MAT, DataFrames, CSV
 
 mpc = matread("kpg193_v1_5/network/mat/KPG193_ver1_5.mat")["mpc"]
 
@@ -33,10 +48,22 @@ println("Loaded KPG 193 v1.5: \$(size(buses, 1)) buses")
 
 # Bus locations
 locations = CSV.read("kpg193_v1_5/network/location/bus_location.csv", DataFrame)`,
+      },
     },
     {
-      title: 'Hourly Profile (Day 1)',
-      body: `using CSV, DataFrames
+      title: { ko: '시간별 프로파일 (Day 1)', en: 'Hourly Profile (Day 1)' },
+      body: {
+        ko: `using CSV, DataFrames
+
+day = 1
+demand     = CSV.read("kpg193_v1_5/profile/demand/daily_demand_\$day.csv", DataFrame)
+renewables = CSV.read("kpg193_v1_5/profile/renewables/renewables_\$day.csv", DataFrame)
+weather    = CSV.read("kpg193_v1_5/profile/weather/weather_\$day.csv", DataFrame)
+
+# 실제 태양광 출력 = 용량 × 프로파일 계수
+solar_cap = CSV.read("kpg193_v1_5/renewables_capacity/solar_generators_2022.csv", DataFrame)
+# solar_gen[bus, hour] = solar_cap[bus, :Pmax] * renewables[bus, hour, :pv_profile_ratio]`,
+        en: `using CSV, DataFrames
 
 day = 1
 demand     = CSV.read("kpg193_v1_5/profile/demand/daily_demand_\$day.csv", DataFrame)
@@ -46,18 +73,39 @@ weather    = CSV.read("kpg193_v1_5/profile/weather/weather_\$day.csv", DataFrame
 # Actual solar output = capacity × profile ratio
 solar_cap = CSV.read("kpg193_v1_5/renewables_capacity/solar_generators_2022.csv", DataFrame)
 # solar_gen[bus, hour] = solar_cap[bus, :Pmax] * renewables[bus, hour, :pv_profile_ratio]`,
+      },
     },
     {
-      title: 'Reference UC Solution',
-      body: `commit = CSV.read("kpg193_v1_5/profile/commitment_decision/commitment_decision_\$day.csv", DataFrame)
+      title: { ko: '참조 UC 해', en: 'Reference UC Solution' },
+      body: {
+        ko: `commit = CSV.read("kpg193_v1_5/profile/commitment_decision/commitment_decision_\$day.csv", DataFrame)
 # columns: hour (1-24), generator_id (1-122), status (0=off, 1=on)
 # 알고리즘 검증용 reference solution (tight MILP)`,
+        en: `commit = CSV.read("kpg193_v1_5/profile/commitment_decision/commitment_decision_\$day.csv", DataFrame)
+# columns: hour (1-24), generator_id (1-122), status (0=off, 1=on)
+# Reference solution for algorithm validation (tight MILP)`,
+      },
     },
   ],
   python: [
     {
-      title: 'Load Network (MATPOWER)',
-      body: `import scipy.io
+      title: { ko: '네트워크 로드 (MATPOWER)', en: 'Load Network (MATPOWER)' },
+      body: {
+        ko: `import scipy.io
+import pandas as pd
+
+mat = scipy.io.loadmat("kpg193_v1_5/network/mat/KPG193_ver1_5.mat",
+                      squeeze_me=True, struct_as_record=False)
+mpc = mat["mpc"]
+
+buses      = mpc.bus       # (193, 13)
+generators = mpc.gen       # (122, 21)
+branches   = mpc.branch    # (358, 13)
+
+print(f"KPG 193 v1.5: {buses.shape[0]} 개 버스")
+
+locations = pd.read_csv("kpg193_v1_5/network/location/bus_location.csv")`,
+        en: `import scipy.io
 import pandas as pd
 
 mat = scipy.io.loadmat("kpg193_v1_5/network/mat/KPG193_ver1_5.mat",
@@ -71,10 +119,12 @@ branches   = mpc.branch    # (358, 13)
 print(f"KPG 193 v1.5: {buses.shape[0]} buses")
 
 locations = pd.read_csv("kpg193_v1_5/network/location/bus_location.csv")`,
+      },
     },
     {
-      title: 'Parquet (정밀도 보존)',
-      body: `# 본 사이트가 제공하는 Parquet은 DECIMAL(28, 12)로 변환된 동일 데이터
+      title: { ko: 'Parquet (정밀도 보존)', en: 'Parquet (precision preserved)' },
+      body: {
+        ko: `# 본 사이트가 제공하는 Parquet은 DECIMAL(28, 12)로 변환된 동일 데이터
 import pyarrow.parquet as pq
 import pandas as pd
 
@@ -84,10 +134,22 @@ gens     = pq.read_table("frontend/public/data/generators.parquet").to_pandas()
 
 # fuel별 용량
 gens.groupby("fuel")["Pmax"].sum()`,
+        en: `# The Parquet served here is the same data converted to DECIMAL(28, 12)
+import pyarrow.parquet as pq
+import pandas as pd
+
+buses    = pq.read_table("frontend/public/data/buses.parquet").to_pandas()
+demand   = pq.read_table("frontend/public/data/profile_demand.parquet")
+gens     = pq.read_table("frontend/public/data/generators.parquet").to_pandas()
+
+# Capacity by fuel
+gens.groupby("fuel")["Pmax"].sum()`,
+      },
     },
     {
-      title: 'Hourly Profile (Day 1)',
-      body: `day = 1
+      title: { ko: '시간별 프로파일 (Day 1)', en: 'Hourly Profile (Day 1)' },
+      body: {
+        ko: `day = 1
 demand     = pd.read_csv(f"kpg193_v1_5/profile/demand/daily_demand_{day}.csv")
 renewables = pd.read_csv(f"kpg193_v1_5/profile/renewables/renewables_{day}.csv")
 
@@ -96,12 +158,23 @@ solar_cap = pd.read_csv("kpg193_v1_5/renewables_capacity/solar_generators_2022.c
 cap_10  = solar_cap.loc[solar_cap["bus_ID"] == 10, "Pmax [MW]"].iloc[0]
 ratio_h12 = renewables.query("bus_id == 10 and hour == 12")["pv_profile_ratio"].iloc[0]
 solar_gen_10_12 = cap_10 * ratio_h12`,
+        en: `day = 1
+demand     = pd.read_csv(f"kpg193_v1_5/profile/demand/daily_demand_{day}.csv")
+renewables = pd.read_csv(f"kpg193_v1_5/profile/renewables/renewables_{day}.csv")
+
+# Actual solar output at bus 10, hour 12
+solar_cap = pd.read_csv("kpg193_v1_5/renewables_capacity/solar_generators_2022.csv")
+cap_10  = solar_cap.loc[solar_cap["bus_ID"] == 10, "Pmax [MW]"].iloc[0]
+ratio_h12 = renewables.query("bus_id == 10 and hour == 12")["pv_profile_ratio"].iloc[0]
+solar_gen_10_12 = cap_10 * ratio_h12`,
+      },
     },
   ],
   matlab: [
     {
-      title: 'Load Network (MATPOWER)',
-      body: `% MATPOWER이 PATH에 있어야 함
+      title: { ko: '네트워크 로드 (MATPOWER)', en: 'Load Network (MATPOWER)' },
+      body: {
+        ko: `% MATPOWER이 PATH에 있어야 함
 mpc = loadcase('kpg193_v1_5/network/m/KPG193_ver1_5.m');
 
 fprintf('KPG 193 v1.5\\n');
@@ -111,22 +184,44 @@ fprintf('Branches:   %d\\n', size(mpc.branch, 1));
 fprintf('Base MVA:   %.1f\\n', mpc.baseMVA);
 
 locations = readtable('kpg193_v1_5/network/location/bus_location.csv');`,
+        en: `% MATPOWER must be on PATH
+mpc = loadcase('kpg193_v1_5/network/m/KPG193_ver1_5.m');
+
+fprintf('KPG 193 v1.5\\n');
+fprintf('Buses:      %d\\n', size(mpc.bus, 1));
+fprintf('Generators: %d\\n', size(mpc.gen, 1));
+fprintf('Branches:   %d\\n', size(mpc.branch, 1));
+fprintf('Base MVA:   %.1f\\n', mpc.baseMVA);
+
+locations = readtable('kpg193_v1_5/network/location/bus_location.csv');`,
+      },
     },
     {
-      title: 'Run AC-OPF',
-      body: `results = runopf(mpc);
+      title: { ko: 'AC-OPF 실행', en: 'Run AC-OPF' },
+      body: {
+        ko: `results = runopf(mpc);
 
 if results.success
     fprintf('총 비용: \\$%.2f\\n', results.f);
 else
+    error('OPF 수렴 실패');
+end`,
+        en: `results = runopf(mpc);
+
+if results.success
+    fprintf('Total cost: \\$%.2f\\n', results.f);
+else
     error('OPF did not converge');
 end`,
+      },
     },
   ],
 };
 
+const pick = <T extends { ko: string; en: string }>(s: T, locale: Locale) => s[locale];
+
 export const GuidePage = () => {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [active, setActive] = useState<Lang>('python');
   const [copied, setCopied] = useState<string | null>(null);
 
@@ -175,22 +270,22 @@ export const GuidePage = () => {
       </section>
 
       {SNIPPETS[active].map((snip, i) => (
-        <section key={snip.title} className="space-y-3">
+        <section key={pick(snip.title, locale)} className="space-y-3">
           <div className="flex items-center gap-3">
             <span className="flex h-7 w-7 items-center justify-center bg-fg font-mono text-[10px] font-bold text-bg">
               {String(i + 1).padStart(2, '0')}
             </span>
-            <h3 className="font-serif text-xl italic text-fg">{snip.title}</h3>
+            <h3 className="font-serif text-xl italic text-fg">{pick(snip.title, locale)}</h3>
           </div>
           <div className="relative">
             <button
-              onClick={() => copy(`${active}-${i}`, snip.body)}
+              onClick={() => copy(`${active}-${i}`, pick(snip.body, locale))}
               className="absolute right-3 top-3 z-10 border border-border bg-bg-elev px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-fg-muted transition-colors hover:bg-fg hover:text-bg"
             >
               {copied === `${active}-${i}` ? t.guide.copied : t.guide.copy}
             </button>
             <pre className="overflow-x-auto border border-border bg-bg p-5 pr-24 font-mono text-[12px] leading-relaxed text-fg">
-              {snip.body}
+              {pick(snip.body, locale)}
             </pre>
           </div>
         </section>

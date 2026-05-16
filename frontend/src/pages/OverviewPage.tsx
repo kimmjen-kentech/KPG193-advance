@@ -125,6 +125,15 @@ const Hero = () => {
 
 const Pending = () => <Skeleton className="h-5 w-16" />;
 
+const ErrorBanner = ({ message }: { message: string }) => {
+  const { t } = useI18n();
+  return (
+    <div className="border border-border bg-bg-elev p-4 font-mono text-xs text-fg-muted">
+      {t.common.dataLoadError}: {message}
+    </div>
+  );
+};
+
 const KpiBar = ({ kpi }: { kpi: OverviewKpi | null }) => {
   const { t } = useI18n();
   const renewableMw = kpi
@@ -220,11 +229,7 @@ export const OverviewPage = () => {
   return (
     <div className="space-y-20">
       <Hero />
-      {kpi.error && (
-        <div className="border border-border bg-bg-elev p-4 font-mono text-xs text-fg-muted">
-          데이터 로드 실패: {kpi.error.message}
-        </div>
-      )}
+      {kpi.error && <ErrorBanner message={kpi.error.message} />}
       <KpiBar kpi={kpi.data?.[0] ?? null} />
       <GenerationMix rows={mix.data} />
       <TemporalStrip />
