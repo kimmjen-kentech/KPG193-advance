@@ -121,3 +121,63 @@ export interface NetworkDcLine {
   to_lng: number;
   p_max: string;
 }
+
+export const profileDemandSQL = (day: number) => `
+  SELECT
+    hour::INTEGER AS hour,
+    SUM(demandP)::DOUBLE AS total_mw,
+    SUM(demandP)::VARCHAR AS total_exact
+  FROM '${u('profile_demand')}'
+  WHERE day = ${day}
+  GROUP BY hour
+  ORDER BY hour
+`;
+
+export interface ProfileDemandRow {
+  hour: number;
+  total_mw: number;
+  total_exact: string;
+}
+
+export const profileRenewablesSQL = (day: number) => `
+  SELECT
+    hour::INTEGER AS hour,
+    AVG(pv_profile_ratio)::DOUBLE AS solar,
+    AVG(wind_profile_ratio)::DOUBLE AS wind,
+    AVG(hydro_profile_ratio)::DOUBLE AS hydro
+  FROM '${u('profile_renewables')}'
+  WHERE day = ${day}
+  GROUP BY hour
+  ORDER BY hour
+`;
+
+export interface ProfileRenewablesRow {
+  hour: number;
+  solar: number;
+  wind: number;
+  hydro: number;
+}
+
+export const commitmentByFuelSQL = (day: number) => `
+  WITH gen AS (
+    SELECT ROW_NUMBER() OVER ()::INTEGER AS generator_id, fuel, Pmax::DOUBLE AS pmax
+    FROM '${u('generators')}'
+  )
+  SELECT
+    c.hour::INTEGER AS hour,
+    g.fuel,
+    COUNT(*) FILTER (WHERE c.status = 1)::INTEGER AS units_on,
+    SUM(g.pmax) FILTER (WHERE c.status = 1)::DOUBLE AS capacity_on_mw
+  FROM '${u('profile_commitment')}' c
+  JOIN gen g ON c.generator_id = g.generator_id
+  WHERE c.day = ${day}
+  GROUP BY c.hour, g.fuel
+  ORDER BY c.hour, g.fuel
+`;
+
+export interface CommitmentByFuelRow {
+  hour: number;
+  fuel: 'coal' | 'lng' | 'nuclear';
+  units_on: number;
+  capacity_on_mw: number;
+}
