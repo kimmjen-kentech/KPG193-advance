@@ -1,5 +1,5 @@
 {
-  "buildCommand": "cd frontend && pnpm install --frozen-lockfile && pnpm build",
+  "buildCommand": "cd frontend && npx -y pnpm@11 install --frozen-lockfile && npx -y pnpm@11 build",
   "outputDirectory": "frontend/dist",
   "installCommand": "echo skip",
   "framework": null,
