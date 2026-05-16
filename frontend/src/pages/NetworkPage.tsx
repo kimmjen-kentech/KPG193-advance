@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { DeckGL } from 'deck.gl';
-import { ScatterplotLayer, LineLayer, PathLayer } from 'deck.gl';
+import { ScatterplotLayer, LineLayer, PathLayer, IconLayer } from 'deck.gl';
 import type { PickingInfo } from 'deck.gl';
 import { Map as MapLibre } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -11,25 +11,18 @@ import {
   networkBranchesSQL,
   networkDcLinesSQL,
   networkGeneratorsSQL,
+  networkGenerationMixSQL,
   type NetworkBus,
   type NetworkBranch,
   type NetworkDcLine,
   type NetworkGenerator,
+  type NetworkBusGenMix,
 } from '../lib/queries';
 import { toDisplay } from '../utils/decimal';
 import { useTheme } from '../hooks/useTheme';
-import { FUEL_COLORS_HEX } from '../lib/constants';
-
-const hexToRGB = (hex: string): [number, number, number] => {
-  const v = hex.replace('#', '');
-  return [parseInt(v.slice(0, 2), 16), parseInt(v.slice(2, 4), 16), parseInt(v.slice(4, 6), 16)];
-};
-
-const FUEL_RGB = {
-  coal: hexToRGB(FUEL_COLORS_HEX.coal),
-  lng: hexToRGB(FUEL_COLORS_HEX.lng),
-  nuclear: hexToRGB(FUEL_COLORS_HEX.nuclear),
-} as const;
+import { getFuelIconUrl, FUEL_ICON_SIZE, FUEL_ICON_SVG } from '../lib/fuelIcons';
+import { generateAllPieIcons, type PieIcon } from '../lib/pieIcon';
+import { cn } from '../lib/cn';
 
 const INITIAL_VIEW = {
   longitude: 127.8,
@@ -77,7 +70,8 @@ export const NetworkPage = () => {
   const branches = useQuery<NetworkBranch>(networkBranchesSQL);
   const dcLines = useQuery<NetworkDcLine>(networkDcLinesSQL);
   const generators = useQuery<NetworkGenerator>(networkGeneratorsSQL);
-  const [showGenerators, setShowGenerators] = useState(true);
+  const genMix = useQuery<NetworkBusGenMix>(networkGenerationMixSQL);
+  const [genView, setGenView] = useState<'off' | 'icons' | 'pie'>('icons');
 
   const [selection, setSelection] = useState<Selection>(null);
   const [hoverInfo, setHoverInfo] = useState<PickingInfo | null>(null);
@@ -87,6 +81,11 @@ export const NetworkPage = () => {
     buses.data?.forEach((b) => m.set(b.id, b));
     return m;
   }, [buses.data]);
+
+  const pieIcons: PieIcon[] = useMemo(() => {
+    if (genView !== 'pie' || !genMix.data) return [];
+    return generateAllPieIcons(genMix.data);
+  }, [genMix.data, genView]);
 
   const layers = useMemo(() => {
     const out: unknown[] = [];
@@ -130,7 +129,7 @@ export const NetworkPage = () => {
       }
     }
 
-    if (showGenerators && generators.data) {
+    if (genView === 'icons' && generators.data) {
       const grouped = new Map<string, NetworkGenerator[]>();
       generators.data.forEach((g) => {
         const key = `${g.bus_id}-${g.fuel}`;
@@ -148,18 +147,41 @@ export const NetworkPage = () => {
       );
 
       out.push(
-        new ScatterplotLayer({
+        new IconLayer({
           id: 'generators',
           data: aggregated,
           getPosition: (d: NetworkGenerator) => [d.lng + 0.05, d.lat + 0.05],
-          getRadius: (d: NetworkGenerator) => Math.sqrt(d.pmax_mw) * 120,
-          radiusMinPixels: 4,
-          radiusMaxPixels: 22,
-          getFillColor: (d: NetworkGenerator) => [...FUEL_RGB[d.fuel], 200],
-          getLineColor: [10, 10, 10, 220],
-          getLineWidth: 1,
-          lineWidthUnits: 'pixels',
-          stroked: true,
+          getIcon: (d: NetworkGenerator) => ({
+            url: getFuelIconUrl(d.fuel),
+            width: FUEL_ICON_SIZE,
+            height: FUEL_ICON_SIZE,
+            anchorX: FUEL_ICON_SIZE / 2,
+            anchorY: FUEL_ICON_SIZE / 2,
+          }),
+          getSize: (d: NetworkGenerator) => Math.sqrt(d.pmax_mw) * 0.7 + 18,
+          sizeMinPixels: 18,
+          sizeMaxPixels: 56,
+          sizeUnits: 'pixels',
+          pickable: false,
+        }),
+      );
+    }
+
+    if (genView === 'pie' && pieIcons.length > 0) {
+      out.push(
+        new IconLayer({
+          id: 'generation-pie',
+          data: pieIcons,
+          getPosition: (d: PieIcon) => [d.lng, d.lat],
+          getIcon: (d: PieIcon) => ({
+            url: d.iconUrl,
+            width: d.size * 2,
+            height: d.size * 2,
+            anchorX: d.size,
+            anchorY: d.size,
+          }),
+          getSize: (d: PieIcon) => d.size,
+          sizeUnits: 'pixels',
           pickable: false,
         }),
       );
@@ -243,7 +265,7 @@ export const NetworkPage = () => {
     }
 
     return { out, selectedBranchKey };
-  }, [buses.data, branches.data, dcLines.data, generators.data, showGenerators, selection, busMap]);
+  }, [buses.data, branches.data, dcLines.data, generators.data, pieIcons, genView, selection, busMap]);
 
   const isLoading = buses.loading || branches.loading || dcLines.loading;
   const error = buses.error || branches.error || dcLines.error;
@@ -311,37 +333,42 @@ export const NetworkPage = () => {
                 <span className="inline-block h-[2px] w-6 bg-[#facc15]" />
                 HVDC
               </div>
-              <button
-                onClick={() => setShowGenerators((v) => !v)}
-                className="mt-2 flex w-full items-center justify-between border-t border-border pt-2 text-left transition-opacity hover:opacity-80"
-              >
-                <span className="text-[9px] uppercase tracking-[0.2em] text-fg">
-                  Generators {showGenerators ? '◉' : '○'}
-                </span>
-              </button>
-              {showGenerators && (
+              <div className="mt-2 border-t border-border pt-2">
+                <div className="mb-1.5 text-[9px] uppercase tracking-[0.2em] text-fg">
+                  Generators
+                </div>
+                <div className="flex gap-1">
+                  {(['off', 'icons', 'pie'] as const).map((mode) => (
+                    <button
+                      key={mode}
+                      onClick={() => setGenView(mode)}
+                      className={cn(
+                        'flex-1 border px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.15em] transition-colors',
+                        genView === mode
+                          ? 'border-fg bg-fg text-bg'
+                          : 'border-border bg-bg text-fg-muted hover:text-fg',
+                      )}
+                    >
+                      {mode}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {genView === 'icons' && (
                 <>
-                  <div className="flex items-center gap-3">
-                    <span
-                      className="inline-block h-2.5 w-2.5 rounded-full"
-                      style={{ backgroundColor: FUEL_COLORS_HEX.nuclear }}
-                    />
-                    Nuclear
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span
-                      className="inline-block h-2.5 w-2.5 rounded-full"
-                      style={{ backgroundColor: FUEL_COLORS_HEX.coal }}
-                    />
-                    Coal
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span
-                      className="inline-block h-2.5 w-2.5 rounded-full"
-                      style={{ backgroundColor: FUEL_COLORS_HEX.lng }}
-                    />
-                    LNG
-                  </div>
+                  <FuelLegendRow fuel="nuclear" label="Nuclear" />
+                  <FuelLegendRow fuel="coal" label="Coal" />
+                  <FuelLegendRow fuel="lng" label="LNG" />
+                </>
+              )}
+              {genView === 'pie' && (
+                <>
+                  <FuelLegendRow fuel="nuclear" label="Nuclear" />
+                  <FuelLegendRow fuel="coal" label="Coal" />
+                  <FuelLegendRow fuel="lng" label="LNG" />
+                  <FuelLegendRow fuel="solar" label="Solar" />
+                  <FuelLegendRow fuel="wind" label="Wind" />
+                  <FuelLegendRow fuel="hydro" label="Hydro" />
                 </>
               )}
             </div>
@@ -683,6 +710,22 @@ const Cell = ({
       {label}
     </div>
     {children}
+  </div>
+);
+
+const FuelLegendRow = ({
+  fuel,
+  label,
+}: {
+  fuel: 'coal' | 'lng' | 'nuclear' | 'solar' | 'wind' | 'hydro';
+  label: string;
+}) => (
+  <div className="flex items-center gap-3">
+    <span
+      className="inline-block h-4 w-4 shrink-0"
+      dangerouslySetInnerHTML={{ __html: FUEL_ICON_SVG[fuel] }}
+    />
+    {label}
   </div>
 );
 

@@ -148,6 +148,46 @@ export interface NetworkGenerator {
   name_en: string;
 }
 
+export const networkGenerationMixSQL = `
+  WITH per_bus AS (
+    SELECT bus::INTEGER AS bus_id, fuel, Pmax::DOUBLE AS mw FROM '${u('generators')}' WHERE Pmax > 0
+    UNION ALL
+    SELECT bus_ID::INTEGER, 'solar', "Pmax [MW]"::DOUBLE FROM '${u('capacity_solar')}' WHERE "Pmax [MW]" > 0
+    UNION ALL
+    SELECT bus_ID::INTEGER, 'wind',  "Pmax [MW]"::DOUBLE FROM '${u('capacity_wind')}'  WHERE "Pmax [MW]" > 0
+    UNION ALL
+    SELECT bus_ID::INTEGER, 'hydro', "Pmax [MW]"::DOUBLE FROM '${u('capacity_hydro')}' WHERE "Pmax [MW]" > 0
+  )
+  SELECT
+    pb.bus_id,
+    loc.Latitude::DOUBLE AS lat,
+    loc.Longitude::DOUBLE AS lng,
+    SUM(CASE WHEN pb.fuel = 'coal'    THEN pb.mw ELSE 0 END) AS coal,
+    SUM(CASE WHEN pb.fuel = 'lng'     THEN pb.mw ELSE 0 END) AS lng_mw,
+    SUM(CASE WHEN pb.fuel = 'nuclear' THEN pb.mw ELSE 0 END) AS nuclear,
+    SUM(CASE WHEN pb.fuel = 'solar'   THEN pb.mw ELSE 0 END) AS solar,
+    SUM(CASE WHEN pb.fuel = 'wind'    THEN pb.mw ELSE 0 END) AS wind,
+    SUM(CASE WHEN pb.fuel = 'hydro'   THEN pb.mw ELSE 0 END) AS hydro,
+    SUM(pb.mw) AS total
+  FROM per_bus pb
+  JOIN '${u('bus_location')}' loc ON pb.bus_id = loc.bus_id
+  GROUP BY pb.bus_id, loc.Latitude, loc.Longitude
+  HAVING SUM(pb.mw) > 0
+`;
+
+export interface NetworkBusGenMix {
+  bus_id: number;
+  lat: number;
+  lng: number;
+  coal: number;
+  lng_mw: number;
+  nuclear: number;
+  solar: number;
+  wind: number;
+  hydro: number;
+  total: number;
+}
+
 export const profileDemandSQL = (day: number, busId: number | null = null) => `
   SELECT
     hour::INTEGER AS hour,
