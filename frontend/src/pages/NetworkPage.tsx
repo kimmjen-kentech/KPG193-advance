@@ -10,12 +10,26 @@ import {
   networkBusesSQL,
   networkBranchesSQL,
   networkDcLinesSQL,
+  networkGeneratorsSQL,
   type NetworkBus,
   type NetworkBranch,
   type NetworkDcLine,
+  type NetworkGenerator,
 } from '../lib/queries';
 import { toDisplay } from '../utils/decimal';
 import { useTheme } from '../hooks/useTheme';
+import { FUEL_COLORS_HEX } from '../lib/constants';
+
+const hexToRGB = (hex: string): [number, number, number] => {
+  const v = hex.replace('#', '');
+  return [parseInt(v.slice(0, 2), 16), parseInt(v.slice(2, 4), 16), parseInt(v.slice(4, 6), 16)];
+};
+
+const FUEL_RGB = {
+  coal: hexToRGB(FUEL_COLORS_HEX.coal),
+  lng: hexToRGB(FUEL_COLORS_HEX.lng),
+  nuclear: hexToRGB(FUEL_COLORS_HEX.nuclear),
+} as const;
 
 const INITIAL_VIEW = {
   longitude: 127.8,
@@ -62,6 +76,8 @@ export const NetworkPage = () => {
   const buses = useQuery<NetworkBus>(networkBusesSQL);
   const branches = useQuery<NetworkBranch>(networkBranchesSQL);
   const dcLines = useQuery<NetworkDcLine>(networkDcLinesSQL);
+  const generators = useQuery<NetworkGenerator>(networkGeneratorsSQL);
+  const [showGenerators, setShowGenerators] = useState(true);
 
   const [selection, setSelection] = useState<Selection>(null);
   const [hoverInfo, setHoverInfo] = useState<PickingInfo | null>(null);
@@ -112,6 +128,41 @@ export const NetworkPage = () => {
           }),
         );
       }
+    }
+
+    if (showGenerators && generators.data) {
+      const grouped = new Map<string, NetworkGenerator[]>();
+      generators.data.forEach((g) => {
+        const key = `${g.bus_id}-${g.fuel}`;
+        const arr = grouped.get(key) ?? [];
+        arr.push(g);
+        grouped.set(key, arr);
+      });
+      const fuelOrder: Array<'nuclear' | 'coal' | 'lng'> = ['nuclear', 'coal', 'lng'];
+      const aggregated = Array.from(grouped.values()).map((arr) => {
+        const total = arr.reduce((s, g) => s + g.pmax_mw, 0);
+        return { ...arr[0], pmax_mw: total, count: arr.length };
+      });
+      aggregated.sort(
+        (a, b) => fuelOrder.indexOf(a.fuel) - fuelOrder.indexOf(b.fuel),
+      );
+
+      out.push(
+        new ScatterplotLayer({
+          id: 'generators',
+          data: aggregated,
+          getPosition: (d: NetworkGenerator) => [d.lng + 0.05, d.lat + 0.05],
+          getRadius: (d: NetworkGenerator) => Math.sqrt(d.pmax_mw) * 120,
+          radiusMinPixels: 4,
+          radiusMaxPixels: 22,
+          getFillColor: (d: NetworkGenerator) => [...FUEL_RGB[d.fuel], 200],
+          getLineColor: [10, 10, 10, 220],
+          getLineWidth: 1,
+          lineWidthUnits: 'pixels',
+          stroked: true,
+          pickable: false,
+        }),
+      );
     }
 
     if (dcLines.data) {
@@ -192,7 +243,7 @@ export const NetworkPage = () => {
     }
 
     return { out, selectedBranchKey };
-  }, [buses.data, branches.data, dcLines.data, selection, busMap]);
+  }, [buses.data, branches.data, dcLines.data, generators.data, showGenerators, selection, busMap]);
 
   const isLoading = buses.loading || branches.loading || dcLines.loading;
   const error = buses.error || branches.error || dcLines.error;
@@ -260,6 +311,39 @@ export const NetworkPage = () => {
                 <span className="inline-block h-[2px] w-6 bg-[#facc15]" />
                 HVDC
               </div>
+              <button
+                onClick={() => setShowGenerators((v) => !v)}
+                className="mt-2 flex w-full items-center justify-between border-t border-border pt-2 text-left transition-opacity hover:opacity-80"
+              >
+                <span className="text-[9px] uppercase tracking-[0.2em] text-fg">
+                  Generators {showGenerators ? '◉' : '○'}
+                </span>
+              </button>
+              {showGenerators && (
+                <>
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="inline-block h-2.5 w-2.5 rounded-full"
+                      style={{ backgroundColor: FUEL_COLORS_HEX.nuclear }}
+                    />
+                    Nuclear
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="inline-block h-2.5 w-2.5 rounded-full"
+                      style={{ backgroundColor: FUEL_COLORS_HEX.coal }}
+                    />
+                    Coal
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="inline-block h-2.5 w-2.5 rounded-full"
+                      style={{ backgroundColor: FUEL_COLORS_HEX.lng }}
+                    />
+                    LNG
+                  </div>
+                </>
+              )}
             </div>
           </div>
 

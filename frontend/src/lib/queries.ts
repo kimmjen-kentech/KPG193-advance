@@ -122,6 +122,32 @@ export interface NetworkDcLine {
   p_max: string;
 }
 
+export const networkGeneratorsSQL = `
+  SELECT
+    g.bus::INTEGER AS bus_id,
+    g.fuel,
+    g.Pmax::DOUBLE AS pmax_mw,
+    g.Pmax::VARCHAR AS pmax_exact,
+    loc.Latitude::DOUBLE AS lat,
+    loc.Longitude::DOUBLE AS lng,
+    loc.name_Korean AS name_kr,
+    loc.name_English AS name_en
+  FROM '${u('generators')}' g
+  JOIN '${u('bus_location')}' loc ON g.bus = loc.bus_id
+  WHERE g.Pmax > 0
+`;
+
+export interface NetworkGenerator {
+  bus_id: number;
+  fuel: 'coal' | 'lng' | 'nuclear';
+  pmax_mw: number;
+  pmax_exact: string;
+  lat: number;
+  lng: number;
+  name_kr: string;
+  name_en: string;
+}
+
 export const profileDemandSQL = (day: number) => `
   SELECT
     hour::INTEGER AS hour,
