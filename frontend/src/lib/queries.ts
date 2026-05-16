@@ -148,13 +148,13 @@ export interface NetworkGenerator {
   name_en: string;
 }
 
-export const profileDemandSQL = (day: number) => `
+export const profileDemandSQL = (day: number, busId: number | null = null) => `
   SELECT
     hour::INTEGER AS hour,
     SUM(demandP)::DOUBLE AS total_mw,
     SUM(demandP)::VARCHAR AS total_exact
   FROM '${u('profile_demand')}'
-  WHERE day = ${day}
+  WHERE day = ${day}${busId !== null ? ` AND bus_id = ${busId}` : ''}
   GROUP BY hour
   ORDER BY hour
 `;
@@ -165,17 +165,29 @@ export interface ProfileDemandRow {
   total_exact: string;
 }
 
-export const profileRenewablesSQL = (day: number) => `
+export const profileRenewablesSQL = (day: number, busId: number | null = null) => `
   SELECT
     hour::INTEGER AS hour,
     AVG(pv_profile_ratio)::DOUBLE AS solar,
     AVG(wind_profile_ratio)::DOUBLE AS wind,
     AVG(hydro_profile_ratio)::DOUBLE AS hydro
   FROM '${u('profile_renewables')}'
-  WHERE day = ${day}
+  WHERE day = ${day}${busId !== null ? ` AND bus_id = ${busId}` : ''}
   GROUP BY hour
   ORDER BY hour
 `;
+
+export const busListSQL = `
+  SELECT bus_id::INTEGER AS id, name_Korean AS name_kr, name_English AS name_en
+  FROM '${u('bus_location')}'
+  ORDER BY bus_id
+`;
+
+export interface BusListRow {
+  id: number;
+  name_kr: string;
+  name_en: string;
+}
 
 export interface ProfileRenewablesRow {
   hour: number;

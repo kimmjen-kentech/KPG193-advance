@@ -1,13 +1,15 @@
 import { useMemo, useState } from 'react';
-import { Activity, Sun, Flame } from 'lucide-react';
+import { Activity, Sun, Flame, X } from 'lucide-react';
 import { useQuery } from '../hooks/useQuery';
 import {
   profileDemandSQL,
   profileRenewablesSQL,
   commitmentByFuelSQL,
+  busListSQL,
   type ProfileDemandRow,
   type ProfileRenewablesRow,
   type CommitmentByFuelRow,
+  type BusListRow,
 } from '../lib/queries';
 import { AreaChart } from '../components/charts/AreaChart';
 import { LineSeriesChart } from '../components/charts/LineSeriesChart';
@@ -25,10 +27,17 @@ const MONTH_DAYS = [1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335];
 
 export const ProfilesPage = () => {
   const [day, setDay] = useState(1);
+  const [busId, setBusId] = useState<number | null>(null);
 
-  const demand = useQuery<ProfileDemandRow>(profileDemandSQL(day));
-  const renewables = useQuery<ProfileRenewablesRow>(profileRenewablesSQL(day));
+  const busList = useQuery<BusListRow>(busListSQL);
+  const demand = useQuery<ProfileDemandRow>(profileDemandSQL(day, busId));
+  const renewables = useQuery<ProfileRenewablesRow>(profileRenewablesSQL(day, busId));
   const commitment = useQuery<CommitmentByFuelRow>(commitmentByFuelSQL(day));
+
+  const selectedBus = useMemo(
+    () => busList.data?.find((b) => b.id === busId) ?? null,
+    [busList.data, busId],
+  );
 
   const demandPoints = useMemo(
     () => demand.data?.map((d) => ({ x: d.hour, y: d.total_mw })) ?? [],
@@ -88,7 +97,49 @@ export const ProfilesPage = () => {
         </p>
       </header>
 
-      <section className="space-y-4 border border-border bg-bg-elev p-6">
+      <section className="grid items-stretch gap-3 lg:grid-cols-[320px_1fr]">
+        <div className="border border-border bg-bg-elev p-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg-subtle">
+                Scope
+              </div>
+              <div className="mt-1 font-mono text-base font-bold text-fg">
+                {selectedBus
+                  ? `#${String(selectedBus.id).padStart(3, '0')}. ${selectedBus.name_kr}`
+                  : 'System-wide (193 buses)'}
+              </div>
+              {selectedBus && (
+                <div className="mt-0.5 font-mono text-[10px] text-fg-muted">
+                  {selectedBus.name_en}
+                </div>
+              )}
+            </div>
+            {busId !== null && (
+              <button
+                onClick={() => setBusId(null)}
+                className="border border-border p-1.5 text-fg-muted transition-colors hover:bg-fg hover:text-bg"
+                title="Clear filter"
+              >
+                <X size={12} />
+              </button>
+            )}
+          </div>
+          <select
+            value={busId ?? ''}
+            onChange={(e) => setBusId(e.target.value === '' ? null : parseInt(e.target.value))}
+            className="mt-4 w-full border border-border bg-bg p-2 font-mono text-xs text-fg"
+          >
+            <option value="">— all buses (sum) —</option>
+            {busList.data?.map((b) => (
+              <option key={b.id} value={b.id}>
+                #{String(b.id).padStart(3, '0')}. {b.name_kr} / {b.name_en}
+              </option>
+            ))}
+          </select>
+        </div>
+
+      <div className="space-y-4 border border-border bg-bg-elev p-5">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <div>
             <div className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg-subtle">
@@ -164,6 +215,7 @@ export const ProfilesPage = () => {
             ))}
           </div>
         </div>
+        </div>
       </section>
 
       <ChartCard
@@ -225,7 +277,7 @@ export const ProfilesPage = () => {
 
       <ChartCard
         number="03"
-        title="Thermal Commitment (Reference UC)"
+        title={`Thermal Commitment (Reference UC)${busId !== null ? ' · system-wide' : ''}`}
         icon={Flame}
         right={
           <LegendInline
