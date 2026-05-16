@@ -5,6 +5,7 @@ import { SectionHeader } from '../components/ui/SectionHeader';
 import { FUEL_COLORS_HEX, FUEL_LABELS } from '../lib/constants';
 import { D, ratio, sum, toDisplay, toRounded } from '../utils/decimal';
 import { useQuery } from '../hooks/useQuery';
+import { Skeleton } from '../components/ui/Skeleton';
 import {
   overviewKpiSQL,
   generationMixSQL,
@@ -116,9 +117,7 @@ const Hero = () => (
   </section>
 );
 
-const Pending = () => (
-  <span className="inline-block h-3 w-12 animate-pulse bg-bg-subtle align-middle" />
-);
+const Pending = () => <Skeleton className="h-5 w-16" />;
 
 const KpiBar = ({ kpi }: { kpi: OverviewKpi | null }) => {
   const renewableMw = kpi
