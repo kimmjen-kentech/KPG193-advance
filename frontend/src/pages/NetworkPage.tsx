@@ -21,6 +21,7 @@ import {
 import { toDisplay } from '../utils/decimal';
 import { useTheme } from '../hooks/useTheme';
 import { getFuelIconUrl, FUEL_ICON_SIZE, FUEL_ICON_SVG } from '../lib/fuelIcons';
+import { FUEL_COLORS_HEX } from '../lib/constants';
 import { generateAllPieIcons, type PieIcon } from '../lib/pieIcon';
 import { cn } from '../lib/cn';
 import { useI18n } from '../hooks/useI18n';
@@ -73,7 +74,7 @@ export const NetworkPage = () => {
   const dcLines = useQuery<NetworkDcLine>(networkDcLinesSQL);
   const generators = useQuery<NetworkGenerator>(networkGeneratorsSQL);
   const genMix = useQuery<NetworkBusGenMix>(networkGenerationMixSQL);
-  const [genView, setGenView] = useState<'off' | 'icons' | 'pie'>('icons');
+  const [genView, setGenView] = useState<'base' | 'icons' | 'pie'>('base');
 
   const [selection, setSelection] = useState<Selection>(null);
   const [hoverInfo, setHoverInfo] = useState<PickingInfo | null>(null);
@@ -88,6 +89,17 @@ export const NetworkPage = () => {
     if (genView !== 'pie' || !genMix.data) return [];
     return generateAllPieIcons(genMix.data);
   }, [genMix.data, genView]);
+
+  // 모드별로 base 버스에서 가릴 ID 집합
+  const hiddenBusIds = useMemo<Set<number>>(() => {
+    if (genView === 'icons' && generators.data) {
+      return new Set(generators.data.map((g) => g.bus_id));
+    }
+    if (genView === 'pie') {
+      return new Set(pieIcons.map((p) => p.bus_id));
+    }
+    return new Set();
+  }, [genView, generators.data, pieIcons]);
 
   const layers = useMemo(() => {
     const out: unknown[] = [];
@@ -152,7 +164,7 @@ export const NetworkPage = () => {
         new IconLayer({
           id: 'generators',
           data: aggregated,
-          getPosition: (d: NetworkGenerator) => [d.lng + 0.05, d.lat + 0.05],
+          getPosition: (d: NetworkGenerator) => [d.lng, d.lat],
           getIcon: (d: NetworkGenerator) => ({
             url: getFuelIconUrl(d.fuel),
             width: FUEL_ICON_SIZE,
@@ -160,11 +172,12 @@ export const NetworkPage = () => {
             anchorX: FUEL_ICON_SIZE / 2,
             anchorY: FUEL_ICON_SIZE / 2,
           }),
-          getSize: (d: NetworkGenerator) => Math.sqrt(d.pmax_mw) * 0.7 + 18,
-          sizeMinPixels: 18,
-          sizeMaxPixels: 56,
+          getSize: (d: NetworkGenerator) => Math.sqrt(d.pmax_mw) * 0.25 + 10,
+          sizeMinPixels: 12,
+          sizeMaxPixels: 28,
           sizeUnits: 'pixels',
-          pickable: false,
+          pickable: true,
+          onHover: (info: PickingInfo) => setHoverInfo(info),
         }),
       );
     }
@@ -184,7 +197,8 @@ export const NetworkPage = () => {
           }),
           getSize: (d: PieIcon) => d.size,
           sizeUnits: 'pixels',
-          pickable: false,
+          pickable: true,
+          onHover: (info: PickingInfo) => setHoverInfo(info),
         }),
       );
     }
@@ -207,10 +221,11 @@ export const NetworkPage = () => {
     }
 
     if (buses.data) {
+      const visibleBuses = buses.data.filter((b) => !hiddenBusIds.has(b.id));
       out.push(
         new ScatterplotLayer({
           id: 'buses',
-          data: buses.data,
+          data: visibleBuses,
           getPosition: (d: NetworkBus) => [d.lng, d.lat],
           getRadius: (d: NetworkBus) => voltageRadius(d.kv),
           radiusMinPixels: 3,
@@ -267,15 +282,20 @@ export const NetworkPage = () => {
     }
 
     return { out, selectedBranchKey };
-  }, [buses.data, branches.data, dcLines.data, generators.data, pieIcons, genView, selection, busMap]);
+  }, [buses.data, branches.data, dcLines.data, generators.data, pieIcons, genView, hiddenBusIds, selection, busMap]);
 
   const isLoading = buses.loading || branches.loading || dcLines.loading;
   const error = buses.error || branches.error || dcLines.error;
   const hoveredObj = hoverInfo?.object;
+  const hoveredLayerId = hoverInfo?.layer?.id;
   const hoveredBus =
-    hoverInfo?.layer?.id === 'buses' ? (hoveredObj as NetworkBus | undefined) : undefined;
+    hoveredLayerId === 'buses' ? (hoveredObj as NetworkBus | undefined) : undefined;
   const hoveredBranch =
-    hoverInfo?.layer?.id === 'branches' ? (hoveredObj as NetworkBranch | undefined) : undefined;
+    hoveredLayerId === 'branches' ? (hoveredObj as NetworkBranch | undefined) : undefined;
+  const hoveredPie =
+    hoveredLayerId === 'generation-pie' ? (hoveredObj as PieIcon | undefined) : undefined;
+  const hoveredGen =
+    hoveredLayerId === 'generators' ? (hoveredObj as NetworkGenerator | undefined) : undefined;
 
   return (
     <div className="-mx-4 -my-8 h-[calc(100vh-65px)] sm:-mx-6 lg:-mx-8">
@@ -340,7 +360,7 @@ export const NetworkPage = () => {
                   {t.network.generators}
                 </div>
                 <div className="flex gap-1">
-                  {(['off', 'icons', 'pie'] as const).map((mode) => (
+                  {(['base', 'icons', 'pie'] as const).map((mode) => (
                     <button
                       key={mode}
                       onClick={() => setGenView(mode)}
@@ -376,9 +396,9 @@ export const NetworkPage = () => {
             </div>
           </div>
 
-          {(hoveredBus || hoveredBranch) && hoverInfo && (
+          {(hoveredBus || hoveredBranch || hoveredPie || hoveredGen) && hoverInfo && (
             <div
-              className="pointer-events-none absolute z-10 border border-border bg-bg-elev px-3 py-2 font-mono text-[10px]"
+              className="pointer-events-none absolute z-10 min-w-[180px] border border-border bg-bg-elev px-3 py-2 font-mono text-[10px]"
               style={{ left: hoverInfo.x + 12, top: hoverInfo.y + 12 }}
             >
               {hoveredBus && (
@@ -400,6 +420,19 @@ export const NetworkPage = () => {
                     {Math.round(hoveredBranch.kv)} kV · {toDisplay(hoveredBranch.rate_mva, { grouping: true })} MVA
                   </div>
                 </>
+              )}
+              {hoveredGen && (
+                <>
+                  <div className="font-bold text-fg">
+                    {busLabel(hoveredGen.bus_id, hoveredGen.name_kr)}
+                  </div>
+                  <div className="text-fg-muted">
+                    {t.network[hoveredGen.fuel]} · {toDisplay(hoveredGen.pmax_exact, { grouping: true, suffix: ' MW' })}
+                  </div>
+                </>
+              )}
+              {hoveredPie && (
+                <PieTooltip pie={hoveredPie} busMap={busMap} />
               )}
             </div>
           )}
@@ -714,6 +747,56 @@ const Cell = ({
     {children}
   </div>
 );
+
+const PieTooltip = ({
+  pie,
+  busMap,
+}: {
+  pie: PieIcon;
+  busMap: Map<number, NetworkBus>;
+}) => {
+  const { t } = useI18n();
+  const bus = busMap.get(pie.bus_id);
+  type Fuel = 'coal' | 'lng' | 'nuclear' | 'solar' | 'wind' | 'hydro';
+  const fuels = (
+    [
+      { key: 'nuclear', value: pie.nuclear, label: t.network.nuclear },
+      { key: 'coal', value: pie.coal, label: t.network.coal },
+      { key: 'lng', value: pie.lng_mw, label: t.network.lng },
+      { key: 'solar', value: pie.solar, label: t.network.solar },
+      { key: 'wind', value: pie.wind, label: t.network.wind },
+      { key: 'hydro', value: pie.hydro, label: t.network.hydro },
+    ] as Array<{ key: Fuel; value: number; label: string }>
+  ).filter((f) => f.value > 0);
+
+  return (
+    <div className="space-y-1.5">
+      <div className="font-bold text-fg">
+        {bus ? busLabel(pie.bus_id, bus.name_kr) : `#${pie.bus_id}`}
+      </div>
+      {bus && <div className="text-fg-muted">{bus.name_en}</div>}
+      <div className="border-t border-border pt-1.5 text-fg-muted">
+        Total · <span className="tabular-nums">{pie.total.toFixed(1)} MW</span>
+      </div>
+      <div className="space-y-0.5">
+        {fuels.map((f) => {
+          const pct = ((f.value / pie.total) * 100).toFixed(1);
+          return (
+            <div key={f.key} className="grid grid-cols-[10px_50px_1fr_40px] items-center gap-1.5">
+              <span
+                className="inline-block h-2 w-2"
+                style={{ backgroundColor: FUEL_COLORS_HEX[f.key] }}
+              />
+              <span className="text-fg-muted">{f.label}</span>
+              <span className="text-right tabular-nums text-fg">{f.value.toFixed(0)} MW</span>
+              <span className="text-right tabular-nums text-fg-subtle">{pct}%</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
 
 const FuelLegendRow = ({
   fuel,

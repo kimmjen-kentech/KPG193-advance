@@ -67,6 +67,12 @@ export interface PieIcon {
   total: number;
   iconUrl: string;
   size: number;
+  coal: number;
+  lng_mw: number;
+  nuclear: number;
+  solar: number;
+  wind: number;
+  hydro: number;
 }
 
 export const generateAllPieIcons = (
@@ -83,7 +89,20 @@ export const generateAllPieIcons = (
       const size = Math.round(24 + ratio * 40);
       const url = generatePieIconURL(m, size * 2);
       return url
-        ? { bus_id: m.bus_id, lat: m.lat, lng: m.lng, total: m.total, iconUrl: url, size }
+        ? {
+            bus_id: m.bus_id,
+            lat: m.lat,
+            lng: m.lng,
+            total: m.total,
+            iconUrl: url,
+            size,
+            coal: m.coal,
+            lng_mw: m.lng_mw,
+            nuclear: m.nuclear,
+            solar: m.solar,
+            wind: m.wind,
+            hydro: m.hydro,
+          }
         : null;
     })
     .filter((x): x is PieIcon => x !== null);
