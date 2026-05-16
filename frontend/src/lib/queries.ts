@@ -39,3 +39,83 @@ export interface GenerationMixRow {
   fuel: 'solar' | 'wind' | 'hydro' | 'thermal';
   mw: string;
 }
+
+export const networkBusesSQL = `
+  SELECT
+    loc.bus_id::INTEGER AS id,
+    loc.Latitude::DOUBLE AS lat,
+    loc.Longitude::DOUBLE AS lng,
+    loc.name_Korean AS name_kr,
+    loc.name_English AS name_en,
+    b.baseKV::DOUBLE AS kv,
+    b.area::INTEGER AS area,
+    b.Pd::VARCHAR AS pd,
+    b.Qd::VARCHAR AS qd
+  FROM '${u('bus_location')}' loc
+  JOIN '${u('buses')}' b ON loc.bus_id = b.bus_i
+  ORDER BY id
+`;
+
+export interface NetworkBus {
+  id: number;
+  lat: number;
+  lng: number;
+  name_kr: string;
+  name_en: string;
+  kv: number;
+  area: number;
+  pd: string;
+  qd: string;
+}
+
+export const networkBranchesSQL = `
+  SELECT
+    b.fbus::INTEGER AS from_id,
+    b.tbus::INTEGER AS to_id,
+    f.Latitude::DOUBLE AS from_lat,
+    f.Longitude::DOUBLE AS from_lng,
+    t.Latitude::DOUBLE AS to_lat,
+    t.Longitude::DOUBLE AS to_lng,
+    GREATEST(fb.baseKV, tb.baseKV)::DOUBLE AS kv,
+    b.rateA::VARCHAR AS rate_mva
+  FROM '${u('branches')}' b
+  JOIN '${u('bus_location')}' f ON b.fbus = f.bus_id
+  JOIN '${u('bus_location')}' t ON b.tbus = t.bus_id
+  JOIN '${u('buses')}' fb ON b.fbus = fb.bus_i
+  JOIN '${u('buses')}' tb ON b.tbus = tb.bus_i
+`;
+
+export interface NetworkBranch {
+  from_id: number;
+  to_id: number;
+  from_lat: number;
+  from_lng: number;
+  to_lat: number;
+  to_lng: number;
+  kv: number;
+  rate_mva: string;
+}
+
+export const networkDcLinesSQL = `
+  SELECT
+    d.fbus::INTEGER AS from_id,
+    d.tbus::INTEGER AS to_id,
+    f.Latitude::DOUBLE AS from_lat,
+    f.Longitude::DOUBLE AS from_lng,
+    t.Latitude::DOUBLE AS to_lat,
+    t.Longitude::DOUBLE AS to_lng,
+    d.Pmax::VARCHAR AS p_max
+  FROM '${u('dc_lines')}' d
+  JOIN '${u('bus_location')}' f ON d.fbus = f.bus_id
+  JOIN '${u('bus_location')}' t ON d.tbus = t.bus_id
+`;
+
+export interface NetworkDcLine {
+  from_id: number;
+  to_id: number;
+  from_lat: number;
+  from_lng: number;
+  to_lat: number;
+  to_lng: number;
+  p_max: string;
+}
