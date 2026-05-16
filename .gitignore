@@ -1,0 +1,18 @@
+# IDE
+.idea/
+.claude/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Reference scaffolds (디자인 레퍼런스만)
+kpg-193-test-system-dashboard*/
+
+# Node
+node_modules/
+
+# Build output
+dist/
+build/
