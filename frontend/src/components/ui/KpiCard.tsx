@@ -1,9 +1,10 @@
+import type { ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '../../lib/cn';
 
 interface KpiCardProps {
   label: string;
-  value: string | number;
+  value: ReactNode;
   unit?: string;
   icon?: LucideIcon;
   className?: string;

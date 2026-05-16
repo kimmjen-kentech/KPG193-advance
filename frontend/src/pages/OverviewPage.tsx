@@ -4,19 +4,16 @@ import { KpiCard } from '../components/ui/KpiCard';
 import { SectionHeader } from '../components/ui/SectionHeader';
 import { FUEL_COLORS_HEX, FUEL_LABELS } from '../lib/constants';
 import { D, ratio, sum, toDisplay, toRounded } from '../utils/decimal';
+import { useQuery } from '../hooks/useQuery';
+import {
+  overviewKpiSQL,
+  generationMixSQL,
+  type OverviewKpi,
+  type GenerationMixRow,
+} from '../lib/queries';
 
-// TODO(data): Replace with DuckDB-WASM query when Parquet ready.
-const FUEL_MIX_MW: Record<string, string> = {
-  coal: '23450.5',
-  lng: '38120.25',
-  nuclear: '24560.0',
-  solar: '21800.75',
-  wind: '4280.6',
-  hydro: '6520.4',
-};
-
-const FUEL_ORDER = ['coal', 'lng', 'nuclear', 'solar', 'wind', 'hydro'] as const;
-const RENEWABLE = ['solar', 'wind', 'hydro'] as const;
+const RENEWABLE_FUELS = ['solar', 'wind', 'hydro'] as const;
+const MIX_FUEL_ORDER = ['thermal', 'solar', 'wind', 'hydro'] as const;
 
 const Sparkline = () => {
   const points = Array.from({ length: 64 }, (_, i) => {
@@ -120,39 +117,55 @@ const Hero = () => (
   </section>
 );
 
-const KpiBar = () => {
-  const totalMw = sum(Object.values(FUEL_MIX_MW));
-  const renewableMw = sum(RENEWABLE.map((k) => FUEL_MIX_MW[k]));
-  const renewablePct = ratio(renewableMw, totalMw);
-  const pctValue = renewablePct ? toRounded(D(renewablePct).mul(100), 1) : '0.0';
+const Pending = () => (
+  <span className="inline-block h-3 w-12 animate-pulse bg-bg-subtle align-middle" />
+);
 
-  // TODO(data): Replace mock KPI values with DuckDB-WASM query when Parquet ready.
+const KpiBar = ({ kpi }: { kpi: OverviewKpi | null }) => {
+  const renewableMw = kpi
+    ? sum([kpi.solar_mw, kpi.wind_mw, kpi.hydro_mw])
+    : null;
+  const totalMw = kpi
+    ? sum([kpi.solar_mw, kpi.wind_mw, kpi.hydro_mw, kpi.thermal_mw])
+    : null;
+  const r = renewableMw && totalMw ? ratio(renewableMw, totalMw) : null;
+  const renewablePct = r ? toRounded(D(r).mul(100), 1) : null;
+
   return (
     <section className="space-y-6">
       <SectionHeader number="01" title="System Snapshot" />
       <div className="flex gap-3 overflow-x-auto pb-1 lg:grid lg:grid-cols-6 lg:overflow-visible">
-        <KpiCard label="Buses" value="193" icon={Network} />
-        <KpiCard label="Generators" value="122" icon={Zap} />
-        <KpiCard label="AC Branches" value="358" icon={GitBranch} />
-        <KpiCard label="HVDC Links" value="1" icon={GitBranch} />
+        <KpiCard label="Buses" value={kpi?.bus_count ?? <Pending />} icon={Network} />
+        <KpiCard label="Generators" value={kpi?.gen_count ?? <Pending />} icon={Zap} />
+        <KpiCard label="AC Branches" value={kpi?.branch_count ?? <Pending />} icon={GitBranch} />
+        <KpiCard label="HVDC Links" value={kpi?.dc_count ?? <Pending />} icon={GitBranch} />
         <KpiCard label="Profile" value="8,760" unit="h" icon={Activity} />
-        <KpiCard label="Renewable" value={pctValue} unit="%" icon={Database} />
+        <KpiCard
+          label="Renewable"
+          value={renewablePct ?? <Pending />}
+          unit={renewablePct ? '%' : undefined}
+          icon={Database}
+        />
       </div>
     </section>
   );
 };
 
-const GenerationMix = () => {
-  const totalMw = sum(Object.values(FUEL_MIX_MW));
+const GenerationMix = ({ rows }: { rows: GenerationMixRow[] | null }) => {
+  const mixMap = rows ? Object.fromEntries(rows.map((r) => [r.fuel, r.mw])) : null;
+  const totalMw = mixMap ? sum(Object.values(mixMap)) : null;
+
   return (
     <section className="space-y-6">
       <SectionHeader number="02" title="Generation Mix" />
       <div className="space-y-3 border border-border bg-bg-elev p-6">
-        {FUEL_ORDER.map((key) => {
-          const mw = FUEL_MIX_MW[key];
-          const r = ratio(mw, totalMw);
+        {MIX_FUEL_ORDER.map((key) => {
+          const mw = mixMap?.[key];
+          const r = mw && totalMw ? ratio(mw, totalMw) : null;
           const widthPct = r ? toRounded(D(r).mul(100), 2) : '0';
-          const pctLabel = r ? toRounded(D(r).mul(100), 1) : '0.0';
+          const pctLabel = r ? toRounded(D(r).mul(100), 1) : null;
+          const colorKey =
+            key === 'thermal' ? 'coal' : (key as keyof typeof FUEL_COLORS_HEX);
           return (
             <div key={key} className="grid grid-cols-[100px_1fr_120px_60px] items-center gap-3">
               <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg">
@@ -160,23 +173,28 @@ const GenerationMix = () => {
               </span>
               <div className="h-2 w-full bg-bg-subtle">
                 <div
-                  className="h-full"
+                  className="h-full transition-[width] duration-500"
                   style={{
                     width: `${widthPct}%`,
-                    backgroundColor: FUEL_COLORS_HEX[key],
+                    backgroundColor: FUEL_COLORS_HEX[colorKey],
                   }}
                 />
               </div>
               <span className="text-right font-mono text-xs tabular-nums text-fg">
-                {toDisplay(mw, { grouping: true, suffix: ' MW' })}
+                {mw ? toDisplay(mw, { grouping: true, suffix: ' MW' }) : <Pending />}
               </span>
               <span className="text-right font-mono text-[11px] tabular-nums text-fg-subtle">
-                {pctLabel}%
+                {pctLabel ? `${pctLabel}%` : ''}
               </span>
             </div>
           );
         })}
       </div>
+      {RENEWABLE_FUELS.length > 0 && (
+        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-fg-subtle">
+          Thermal: coal + LNG + nuclear (분리 표시는 후속 작업)
+        </p>
+      )}
     </section>
   );
 };
@@ -193,11 +211,21 @@ const TemporalStrip = () => (
   </section>
 );
 
-export const OverviewPage = () => (
-  <div className="space-y-20">
-    <Hero />
-    <KpiBar />
-    <GenerationMix />
-    <TemporalStrip />
-  </div>
-);
+export const OverviewPage = () => {
+  const kpi = useQuery<OverviewKpi>(overviewKpiSQL);
+  const mix = useQuery<GenerationMixRow>(generationMixSQL);
+
+  return (
+    <div className="space-y-20">
+      <Hero />
+      {kpi.error && (
+        <div className="border border-border bg-bg-elev p-4 font-mono text-xs text-fg-muted">
+          데이터 로드 실패: {kpi.error.message}
+        </div>
+      )}
+      <KpiBar kpi={kpi.data?.[0] ?? null} />
+      <GenerationMix rows={mix.data} />
+      <TemporalStrip />
+    </div>
+  );
+};

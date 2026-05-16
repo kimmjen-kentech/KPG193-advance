@@ -36,6 +36,7 @@ export const FUEL_LABELS: Record<string, string> = {
   coal: 'Coal',
   lng: 'LNG',
   nuclear: 'Nuclear',
+  thermal: 'Thermal',
   solar: 'Solar',
   wind: 'Wind',
   hydro: 'Hydro',
