@@ -249,7 +249,10 @@ const GenerationMix = ({ rows }: { rows: GenerationMixRow[] | null }) => {
           const widthPct = r ? toRounded(D(r).mul(100), 2) : '0';
           const pctLabel = r ? toRounded(D(r).mul(100), 1) : null;
           return (
-            <div key={key} className="grid grid-cols-[100px_1fr_120px_60px] items-center gap-3">
+            <div
+              key={key}
+              className="grid grid-cols-[80px_1fr_auto] items-center gap-2 sm:grid-cols-[100px_1fr_120px_60px] sm:gap-3"
+            >
               <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg">
                 {FUEL_LABELS[key] ?? key}
               </span>
@@ -262,10 +265,10 @@ const GenerationMix = ({ rows }: { rows: GenerationMixRow[] | null }) => {
                   }}
                 />
               </div>
-              <span className="text-right font-mono text-xs tabular-nums text-fg">
+              <span className="text-right font-mono text-[11px] tabular-nums text-fg sm:text-xs">
                 {mw ? formatByMode(mw, mode, { grouping: true, suffix: ' MW' }) : <Pending />}
               </span>
-              <span className="text-right font-mono text-[11px] tabular-nums text-fg-subtle">
+              <span className="col-span-3 -mt-1 hidden text-right font-mono text-[11px] tabular-nums text-fg-subtle sm:col-span-1 sm:mt-0 sm:inline">
                 {pctLabel ? `${pctLabel}%` : <Skeleton className="h-3 w-8" />}
               </span>
             </div>
