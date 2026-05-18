@@ -4,7 +4,7 @@ import { ScatterplotLayer, LineLayer, PathLayer, IconLayer } from 'deck.gl';
 import type { PickingInfo } from 'deck.gl';
 import { Map as MapLibre } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { ChevronRight, CornerDownRight, Cable } from 'lucide-react';
+import { ChevronRight, CornerDownRight, Cable, X, List } from 'lucide-react';
 import { useQuery } from '../hooks/useQuery';
 import {
   networkBusesSQL,
@@ -81,6 +81,8 @@ export const NetworkPage = () => {
   const [legendOpen, setLegendOpen] = useState(
     typeof window !== 'undefined' ? window.innerWidth >= 1024 : true,
   );
+  const [mobileListOpen, setMobileListOpen] = useState(false);
+  const mobileSheetOpen = selection !== null || mobileListOpen;
 
   const busMap = useMemo(() => {
     const m = new Map<number, NetworkBus>();
@@ -294,7 +296,7 @@ export const NetworkPage = () => {
 
   return (
     <div className="-mx-4 -my-8 h-[calc(100vh-65px)] sm:-mx-6 lg:-mx-8">
-      <div className="flex h-full flex-col border-t border-border lg:flex-row">
+      <div className="relative flex h-full flex-col border-t border-border lg:flex-row">
         <div className="relative flex-1 bg-bg-subtle">
           <DeckGL
             initialViewState={INITIAL_VIEW}
@@ -328,6 +330,18 @@ export const NetworkPage = () => {
               )}
             </div>
           </div>
+
+          {/* 모바일 전용 floating 버튼: 시트 닫혔을 때만 노출 */}
+          {!mobileSheetOpen && (
+            <button
+              type="button"
+              onClick={() => setMobileListOpen(true)}
+              className="absolute bottom-5 right-5 z-20 flex items-center gap-2 border border-fg bg-bg px-3 py-2 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg shadow-lg lg:hidden"
+            >
+              <List size={12} />
+              Bus List
+            </button>
+          )}
 
           <div className="absolute bottom-5 left-5 max-w-[calc(100vw-2.5rem)] border border-border bg-bg-elev/90 p-3 backdrop-blur sm:p-4">
             <button
@@ -443,8 +457,33 @@ export const NetworkPage = () => {
           )}
         </div>
 
-        <aside className="flex max-h-[45vh] w-full flex-col overflow-hidden border-t border-border bg-bg lg:max-h-none lg:w-[380px] lg:border-l lg:border-t-0">
-          <div className="border-b border-border bg-bg-subtle p-5">
+        <aside
+          className={cn(
+            // Mobile: 풀스크린 위에 슬라이드 업 시트 (absolute bottom)
+            'absolute inset-x-0 bottom-0 z-30 flex max-h-[70vh] w-full flex-col overflow-hidden border-t border-border bg-bg shadow-2xl transition-transform duration-300 ease-out',
+            mobileSheetOpen ? 'translate-y-0' : 'translate-y-full',
+            // Desktop: 우측 사이드 패널 (transform 무효)
+            'lg:static lg:inset-auto lg:max-h-none lg:w-[380px] lg:translate-y-0 lg:border-l lg:border-t-0 lg:shadow-none',
+          )}
+        >
+          {/* 모바일 드래그 핸들 + 닫기 */}
+          <div className="flex items-center justify-between border-b border-border bg-bg-subtle px-4 py-2 lg:hidden">
+            <button
+              type="button"
+              onClick={() => {
+                setSelection(null);
+                setMobileListOpen(false);
+              }}
+              aria-label="Close panel"
+              className="p-1 text-fg-subtle hover:text-fg"
+            >
+              <X size={16} />
+            </button>
+            <div className="h-1 w-10 rounded-full bg-border" aria-hidden />
+            <div className="w-6" />
+          </div>
+
+          <div className="border-b border-border bg-bg-subtle p-4 sm:p-5">
             <span className="bg-fg px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-bg">
               {selection?.kind === 'branch' ? t.network.inspectorBranch : t.network.inspectorNode}
             </span>
