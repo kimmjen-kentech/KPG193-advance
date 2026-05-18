@@ -443,7 +443,7 @@ export const NetworkPage = () => {
           )}
         </div>
 
-        <aside className="flex max-h-[40vh] w-full flex-col border-t border-border bg-bg lg:max-h-none lg:w-[380px] lg:border-l lg:border-t-0">
+        <aside className="flex max-h-[45vh] w-full flex-col overflow-hidden border-t border-border bg-bg lg:max-h-none lg:w-[380px] lg:border-l lg:border-t-0">
           <div className="border-b border-border bg-bg-subtle p-5">
             <span className="bg-fg px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-bg">
               {selection?.kind === 'branch' ? t.network.inspectorBranch : t.network.inspectorNode}
@@ -787,7 +787,7 @@ const PieTooltip = ({
         {fuels.map((f) => {
           const pct = ((f.value / pie.total) * 100).toFixed(1);
           return (
-            <div key={f.key} className="grid grid-cols-[10px_50px_1fr_40px] items-center gap-1.5">
+            <div key={f.key} className="grid grid-cols-[10px_44px_1fr_36px] items-center gap-1.5">
               <span
                 className="inline-block h-2 w-2"
                 style={{ backgroundColor: FUEL_COLORS_HEX[f.key] }}

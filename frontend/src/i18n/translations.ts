@@ -119,6 +119,9 @@ export interface Translation {
   footer: {
     license: string;
     paper: string;
+    citeAs: string;
+    fullCitation: string;
+    repository: string;
   };
 }
 
@@ -268,6 +271,9 @@ const ko: Translation = {
   footer: {
     license: 'Open Database License (ODbL) v1.0',
     paper: '논문',
+    citeAs: '인용',
+    fullCitation: '전체 BibTeX는 방법론 페이지 참조',
+    repository: '저장소',
   },
 };
 
@@ -424,6 +430,9 @@ const en: Translation = {
   footer: {
     license: 'Open Database License (ODbL) v1.0',
     paper: 'Paper',
+    citeAs: 'Cite as',
+    fullCitation: 'Full BibTeX on methodology page',
+    repository: 'Repository',
   },
 };
 
