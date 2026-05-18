@@ -303,12 +303,19 @@ export const NetworkPage = () => {
             controller={true}
             layers={layers.out as never[]}
             getCursor={({ isHovering }) => (isHovering ? 'pointer' : 'grab')}
+            onClick={(info: PickingInfo) => {
+              // 빈 지도 영역 탭 시 모바일 시트 닫기
+              if (!info.object && mobileSheetOpen) {
+                setSelection(null);
+                setMobileListOpen(false);
+              }
+            }}
           >
             <MapLibre mapStyle={theme === 'dark' ? MAP_STYLE_DARK : MAP_STYLE_LIGHT} />
           </DeckGL>
 
-          <div className="pointer-events-none absolute left-5 top-5 space-y-3">
-            <div className="pointer-events-auto border border-border bg-bg-elev/90 px-4 py-3 backdrop-blur">
+          <div className="pointer-events-none absolute left-3 top-3 space-y-3 sm:left-5 sm:top-5">
+            <div className="pointer-events-auto border border-border bg-bg-elev/90 px-3 py-2 backdrop-blur sm:px-4 sm:py-3">
               <div className="flex items-center gap-2">
                 <span className="relative flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-60" />
@@ -336,14 +343,14 @@ export const NetworkPage = () => {
             <button
               type="button"
               onClick={() => setMobileListOpen(true)}
-              className="absolute bottom-5 right-5 z-20 flex items-center gap-2 border border-fg bg-bg px-3 py-2 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg shadow-lg lg:hidden"
+              className="absolute bottom-3 right-3 z-20 flex items-center gap-2 border border-fg bg-bg px-3 py-2 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg shadow-lg sm:bottom-5 sm:right-5 lg:hidden"
             >
               <List size={12} />
               Bus List
             </button>
           )}
 
-          <div className="absolute bottom-5 left-5 max-w-[calc(100vw-2.5rem)] border border-border bg-bg-elev/90 p-3 backdrop-blur sm:p-4">
+          <div className="absolute bottom-3 left-3 max-w-[calc(100vw-1.5rem)] border border-border bg-bg-elev/90 p-3 backdrop-blur sm:bottom-5 sm:left-5 sm:max-w-[calc(100vw-2.5rem)] sm:p-4">
             <button
               type="button"
               onClick={() => setLegendOpen((v) => !v)}
@@ -456,6 +463,19 @@ export const NetworkPage = () => {
             </div>
           )}
         </div>
+
+        {/* 모바일 시트 backdrop — 클릭 시 닫힘 */}
+        {mobileSheetOpen && (
+          <button
+            type="button"
+            onClick={() => {
+              setSelection(null);
+              setMobileListOpen(false);
+            }}
+            aria-label="Close panel"
+            className="absolute inset-0 z-20 bg-fg/10 backdrop-blur-[1px] lg:hidden"
+          />
+        )}
 
         <aside
           className={cn(
