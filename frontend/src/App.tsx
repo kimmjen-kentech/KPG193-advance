@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { AppShell } from './components/layout/AppShell';
+import { ScrollToTop } from './components/ScrollToTop';
 import { OverviewPage } from './pages/OverviewPage';
 import { DataPage } from './pages/DataPage';
 import { MethodologyPage } from './pages/MethodologyPage';
@@ -25,6 +26,7 @@ const LazyFallback = () => (
 export default function App() {
   return (
     <BrowserRouter basename={basename}>
+      <ScrollToTop />
       <Routes>
         <Route path="pin" element={<PinPage />} />
         <Route element={<AppShell />}>
