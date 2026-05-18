@@ -78,6 +78,9 @@ export const NetworkPage = () => {
 
   const [selection, setSelection] = useState<Selection>(null);
   const [hoverInfo, setHoverInfo] = useState<PickingInfo | null>(null);
+  const [legendOpen, setLegendOpen] = useState(
+    typeof window !== 'undefined' ? window.innerWidth >= 1024 : true,
+  );
 
   const busMap = useMemo(() => {
     const m = new Map<number, NetworkBus>();
@@ -326,10 +329,19 @@ export const NetworkPage = () => {
             </div>
           </div>
 
-          <div className="absolute bottom-5 left-5 border border-border bg-bg-elev/90 p-4 backdrop-blur">
-            <div className="mb-3 border-b border-border pb-2 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg">
-              {t.network.legend}
-            </div>
+          <div className="absolute bottom-5 left-5 max-w-[calc(100vw-2.5rem)] border border-border bg-bg-elev/90 p-3 backdrop-blur sm:p-4">
+            <button
+              type="button"
+              onClick={() => setLegendOpen((v) => !v)}
+              className={cn(
+                'flex w-full items-center justify-between gap-3 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg',
+                legendOpen && 'mb-3 border-b border-border pb-2',
+              )}
+            >
+              <span>{t.network.legend}</span>
+              <span className="font-normal text-fg-subtle">{legendOpen ? '−' : '+'}</span>
+            </button>
+            {legendOpen && (
             <div className="space-y-2 font-mono text-[10px] text-fg-muted">
               <div className="flex items-center gap-3">
                 <span className="inline-block h-3 w-3 rounded-full bg-[#2563eb]" />
@@ -376,16 +388,17 @@ export const NetworkPage = () => {
                 </>
               )}
               {genView === 'pie' && (
-                <>
+                <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
                   <FuelLegendRow fuel="nuclear" label={t.network.nuclear} />
                   <FuelLegendRow fuel="coal" label={t.network.coal} />
                   <FuelLegendRow fuel="lng" label={t.network.lng} />
                   <FuelLegendRow fuel="solar" label={t.network.solar} />
                   <FuelLegendRow fuel="wind" label={t.network.wind} />
                   <FuelLegendRow fuel="hydro" label={t.network.hydro} />
-                </>
+                </div>
               )}
             </div>
+            )}
           </div>
 
           {(hoveredBus || hoveredBranch || hoveredPie || hoveredGen) && hoverInfo && (
