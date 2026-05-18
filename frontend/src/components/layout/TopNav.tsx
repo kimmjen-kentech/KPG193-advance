@@ -120,6 +120,12 @@ export const TopNav = () => {
                 </NavLink>
               );
             })}
+            <div className="flex items-center justify-between gap-3 border-b border-border/40 px-6 py-4">
+              <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg-subtle">
+                Decimal
+              </span>
+              <DecimalToggle />
+            </div>
           </div>
         </div>
       )}
