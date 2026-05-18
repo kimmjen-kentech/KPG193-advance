@@ -5,6 +5,7 @@ import { OverviewPage } from './pages/OverviewPage';
 import { DataPage } from './pages/DataPage';
 import { MethodologyPage } from './pages/MethodologyPage';
 import { GuidePage } from './pages/GuidePage';
+import { PinPage } from './pages/PinPage';
 
 const NetworkPage = lazy(() =>
   import('./pages/NetworkPage').then((m) => ({ default: m.NetworkPage })),
@@ -25,6 +26,7 @@ export default function App() {
   return (
     <BrowserRouter basename={basename}>
       <Routes>
+        <Route path="pin" element={<PinPage />} />
         <Route element={<AppShell />}>
           <Route index element={<OverviewPage />} />
           <Route
