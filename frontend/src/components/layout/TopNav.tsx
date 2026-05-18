@@ -43,7 +43,8 @@ export const TopNav = () => {
         <div className="flex items-center gap-6 lg:gap-10">
           <NavLink to="/" className="flex items-center gap-3" onClick={() => setOpen(false)}>
             <div className="flex h-8 w-8 items-center justify-center bg-fg text-bg">
-              <span className="font-mono text-[10px] font-bold leading-none">KPG</span>
+              <span className="font-mono text-[8px] font-bold leading-none">KPG193</span>
+            {/*  기존에는 10px -> KPG 지금 8px*/}
             </div>
             <div className="hidden flex-col -space-y-0.5 sm:flex">
               <span className="font-mono text-sm font-bold uppercase leading-none tracking-tight text-fg">
@@ -120,6 +121,12 @@ export const TopNav = () => {
                 </NavLink>
               );
             })}
+            <div className="flex items-center justify-between gap-3 border-b border-border/40 px-6 py-4">
+              <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg-subtle">
+                Decimal
+              </span>
+              <DecimalToggle />
+            </div>
           </div>
         </div>
       )}

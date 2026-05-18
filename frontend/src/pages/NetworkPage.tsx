@@ -4,7 +4,7 @@ import { ScatterplotLayer, LineLayer, PathLayer, IconLayer } from 'deck.gl';
 import type { PickingInfo } from 'deck.gl';
 import { Map as MapLibre } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { ChevronRight, CornerDownRight, Cable } from 'lucide-react';
+import { ChevronRight, CornerDownRight, Cable, X, List } from 'lucide-react';
 import { useQuery } from '../hooks/useQuery';
 import {
   networkBusesSQL,
@@ -78,6 +78,11 @@ export const NetworkPage = () => {
 
   const [selection, setSelection] = useState<Selection>(null);
   const [hoverInfo, setHoverInfo] = useState<PickingInfo | null>(null);
+  const [legendOpen, setLegendOpen] = useState(
+    typeof window !== 'undefined' ? window.innerWidth >= 1024 : true,
+  );
+  const [mobileListOpen, setMobileListOpen] = useState(false);
+  const mobileSheetOpen = selection !== null || mobileListOpen;
 
   const busMap = useMemo(() => {
     const m = new Map<number, NetworkBus>();
@@ -291,19 +296,26 @@ export const NetworkPage = () => {
 
   return (
     <div className="-mx-4 -my-8 h-[calc(100vh-65px)] sm:-mx-6 lg:-mx-8">
-      <div className="flex h-full flex-col border-t border-border lg:flex-row">
+      <div className="relative flex h-full flex-col border-t border-border lg:flex-row">
         <div className="relative flex-1 bg-bg-subtle">
           <DeckGL
             initialViewState={INITIAL_VIEW}
             controller={true}
             layers={layers.out as never[]}
             getCursor={({ isHovering }) => (isHovering ? 'pointer' : 'grab')}
+            onClick={(info: PickingInfo) => {
+              // 빈 지도 영역 탭 시 모바일 시트 닫기
+              if (!info.object && mobileSheetOpen) {
+                setSelection(null);
+                setMobileListOpen(false);
+              }
+            }}
           >
             <MapLibre mapStyle={theme === 'dark' ? MAP_STYLE_DARK : MAP_STYLE_LIGHT} />
           </DeckGL>
 
-          <div className="pointer-events-none absolute left-5 top-5 space-y-3">
-            <div className="pointer-events-auto border border-border bg-bg-elev/90 px-4 py-3 backdrop-blur">
+          <div className="pointer-events-none absolute left-3 top-3 space-y-3 sm:left-5 sm:top-5">
+            <div className="pointer-events-auto border border-border bg-bg-elev/90 px-3 py-2 backdrop-blur sm:px-4 sm:py-3">
               <div className="flex items-center gap-2">
                 <span className="relative flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-60" />
@@ -326,10 +338,31 @@ export const NetworkPage = () => {
             </div>
           </div>
 
-          <div className="absolute bottom-5 left-5 border border-border bg-bg-elev/90 p-4 backdrop-blur">
-            <div className="mb-3 border-b border-border pb-2 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg">
-              {t.network.legend}
-            </div>
+          {/* 모바일 전용 floating 버튼: 시트 닫혔을 때만 노출 */}
+          {!mobileSheetOpen && (
+            <button
+              type="button"
+              onClick={() => setMobileListOpen(true)}
+              className="absolute bottom-3 right-3 z-20 flex items-center gap-2 border border-fg bg-bg px-3 py-2 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg shadow-lg sm:bottom-5 sm:right-5 lg:hidden"
+            >
+              <List size={12} />
+              Bus List
+            </button>
+          )}
+
+          <div className="absolute bottom-3 left-3 max-w-[calc(100vw-1.5rem)] border border-border bg-bg-elev/90 p-3 backdrop-blur sm:bottom-5 sm:left-5 sm:max-w-[calc(100vw-2.5rem)] sm:p-4">
+            <button
+              type="button"
+              onClick={() => setLegendOpen((v) => !v)}
+              className={cn(
+                'flex w-full items-center justify-between gap-3 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg',
+                legendOpen && 'mb-3 border-b border-border pb-2',
+              )}
+            >
+              <span>{t.network.legend}</span>
+              <span className="font-normal text-fg-subtle">{legendOpen ? '−' : '+'}</span>
+            </button>
+            {legendOpen && (
             <div className="space-y-2 font-mono text-[10px] text-fg-muted">
               <div className="flex items-center gap-3">
                 <span className="inline-block h-3 w-3 rounded-full bg-[#2563eb]" />
@@ -376,16 +409,17 @@ export const NetworkPage = () => {
                 </>
               )}
               {genView === 'pie' && (
-                <>
+                <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
                   <FuelLegendRow fuel="nuclear" label={t.network.nuclear} />
                   <FuelLegendRow fuel="coal" label={t.network.coal} />
                   <FuelLegendRow fuel="lng" label={t.network.lng} />
                   <FuelLegendRow fuel="solar" label={t.network.solar} />
                   <FuelLegendRow fuel="wind" label={t.network.wind} />
                   <FuelLegendRow fuel="hydro" label={t.network.hydro} />
-                </>
+                </div>
               )}
             </div>
+            )}
           </div>
 
           {(hoveredBus || hoveredBranch || hoveredPie || hoveredGen) && hoverInfo && (
@@ -430,8 +464,46 @@ export const NetworkPage = () => {
           )}
         </div>
 
-        <aside className="flex max-h-[40vh] w-full flex-col border-t border-border bg-bg lg:max-h-none lg:w-[380px] lg:border-l lg:border-t-0">
-          <div className="border-b border-border bg-bg-subtle p-5">
+        {/* 모바일 시트 backdrop — 클릭 시 닫힘 */}
+        {mobileSheetOpen && (
+          <button
+            type="button"
+            onClick={() => {
+              setSelection(null);
+              setMobileListOpen(false);
+            }}
+            aria-label="Close panel"
+            className="absolute inset-0 z-20 bg-fg/10 backdrop-blur-[1px] lg:hidden"
+          />
+        )}
+
+        <aside
+          className={cn(
+            // Mobile: 풀스크린 위에 슬라이드 업 시트 (absolute bottom)
+            'absolute inset-x-0 bottom-0 z-30 flex max-h-[70vh] w-full flex-col overflow-hidden border-t border-border bg-bg shadow-2xl transition-transform duration-300 ease-out',
+            mobileSheetOpen ? 'translate-y-0' : 'translate-y-full',
+            // Desktop: 우측 사이드 패널 (transform 무효)
+            'lg:static lg:inset-auto lg:max-h-none lg:w-[380px] lg:translate-y-0 lg:border-l lg:border-t-0 lg:shadow-none',
+          )}
+        >
+          {/* 모바일 드래그 핸들 + 닫기 */}
+          <div className="flex items-center justify-between border-b border-border bg-bg-subtle px-4 py-2 lg:hidden">
+            <button
+              type="button"
+              onClick={() => {
+                setSelection(null);
+                setMobileListOpen(false);
+              }}
+              aria-label="Close panel"
+              className="p-1 text-fg-subtle hover:text-fg"
+            >
+              <X size={16} />
+            </button>
+            <div className="h-1 w-10 rounded-full bg-border" aria-hidden />
+            <div className="w-6" />
+          </div>
+
+          <div className="border-b border-border bg-bg-subtle p-4 sm:p-5">
             <span className="bg-fg px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-bg">
               {selection?.kind === 'branch' ? t.network.inspectorBranch : t.network.inspectorNode}
             </span>
@@ -774,7 +846,7 @@ const PieTooltip = ({
         {fuels.map((f) => {
           const pct = ((f.value / pie.total) * 100).toFixed(1);
           return (
-            <div key={f.key} className="grid grid-cols-[10px_50px_1fr_40px] items-center gap-1.5">
+            <div key={f.key} className="grid grid-cols-[10px_44px_1fr_36px] items-center gap-1.5">
               <span
                 className="inline-block h-2 w-2"
                 style={{ backgroundColor: FUEL_COLORS_HEX[f.key] }}

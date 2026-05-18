@@ -85,7 +85,7 @@ export const MethodologyPage = () => {
 
       <section className="space-y-4">
         <h2 className="font-serif text-2xl italic text-fg">{t.methodology.specsTitle}</h2>
-        <div className="grid gap-px border border-border bg-border lg:grid-cols-3">
+        <div className="grid grid-cols-2 gap-px border border-border bg-border sm:grid-cols-3">
           {t.methodology.specs.map((spec) => (
             <div key={spec.label} className="bg-bg-elev p-4">
               <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-fg-subtle">
@@ -106,7 +106,7 @@ export const MethodologyPage = () => {
           {t.methodology.sources.map((s) => (
             <div
               key={s.name}
-              className="grid grid-cols-[160px_1fr] items-baseline border border-border bg-bg-elev px-5 py-3"
+              className="flex flex-col gap-1 border border-border bg-bg-elev px-4 py-3 sm:grid sm:grid-cols-[160px_1fr] sm:items-baseline sm:gap-0 sm:px-5"
             >
               <span className="font-mono text-xs font-bold uppercase tracking-[0.18em] text-fg">
                 {s.name}

@@ -95,8 +95,8 @@ export const PinPage = () => {
     : locale === 'ko' ? '확인' : 'Enter';
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-bg p-4 text-fg">
-      <div className="w-full max-w-sm space-y-8">
+    <div className="flex min-h-[100svh] items-center justify-center bg-bg p-4 text-fg">
+      <div className="w-full max-w-sm space-y-6 sm:space-y-8">
         <div className="text-center">
           <div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center border border-border bg-bg-elev">
             <Lock size={18} strokeWidth={1.6} />
@@ -117,7 +117,7 @@ export const PinPage = () => {
             </p>
             <div
               className={cn(
-                'flex justify-center gap-2',
+                'flex justify-center gap-2 sm:gap-3',
                 shake && 'animate-[pinShake_0.4s_ease]',
               )}
             >
@@ -132,8 +132,9 @@ export const PinPage = () => {
                   onChange={(e) => updateDigit(i, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(i, e)}
                   onPaste={handlePaste}
+                  aria-label={`PIN ${i + 1}/4`}
                   className={cn(
-                    'h-14 w-12 border-2 bg-bg-elev text-center font-mono text-xl font-bold tabular-nums text-fg caret-transparent outline-none transition-colors',
+                    'h-12 w-11 border-2 bg-bg-elev text-center font-mono text-lg font-bold tabular-nums text-fg caret-transparent outline-none transition-colors sm:h-14 sm:w-12 sm:text-xl',
                     d ? 'border-fg' : 'border-border focus:border-fg/60',
                     error && 'border-[#ef4444]',
                   )}
