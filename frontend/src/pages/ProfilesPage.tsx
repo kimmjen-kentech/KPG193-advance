@@ -157,40 +157,40 @@ export const ProfilesPage = () => {
               </span>
             </div>
           </div>
-          <div className="flex gap-1.5">
+          <div className="flex flex-wrap justify-end gap-1 sm:gap-1.5">
             <button
               onClick={() => setDay(1)}
-              className="border border-border bg-bg px-2.5 py-1 font-mono text-[10px] text-fg-muted transition-colors hover:bg-fg hover:text-bg"
+              className="hidden sm:inline-flex border border-border bg-bg px-2.5 py-1 font-mono text-[10px] text-fg-muted transition-colors hover:bg-fg hover:text-bg"
             >
               ◀◀
             </button>
             <button
               onClick={() => setDay(Math.max(1, day - 7))}
-              className="border border-border bg-bg px-2.5 py-1 font-mono text-[10px] text-fg-muted transition-colors hover:bg-fg hover:text-bg"
+              className="border border-border bg-bg px-2 py-1 font-mono text-[10px] text-fg-muted transition-colors hover:bg-fg hover:text-bg sm:px-2.5"
             >
               −7
             </button>
             <button
               onClick={() => setDay(Math.max(1, day - 1))}
-              className="border border-border bg-bg px-2.5 py-1 font-mono text-[10px] text-fg-muted transition-colors hover:bg-fg hover:text-bg"
+              className="border border-border bg-bg px-2 py-1 font-mono text-[10px] text-fg-muted transition-colors hover:bg-fg hover:text-bg sm:px-2.5"
             >
               −1
             </button>
             <button
               onClick={() => setDay(Math.min(365, day + 1))}
-              className="border border-border bg-bg px-2.5 py-1 font-mono text-[10px] text-fg-muted transition-colors hover:bg-fg hover:text-bg"
+              className="border border-border bg-bg px-2 py-1 font-mono text-[10px] text-fg-muted transition-colors hover:bg-fg hover:text-bg sm:px-2.5"
             >
               +1
             </button>
             <button
               onClick={() => setDay(Math.min(365, day + 7))}
-              className="border border-border bg-bg px-2.5 py-1 font-mono text-[10px] text-fg-muted transition-colors hover:bg-fg hover:text-bg"
+              className="border border-border bg-bg px-2 py-1 font-mono text-[10px] text-fg-muted transition-colors hover:bg-fg hover:text-bg sm:px-2.5"
             >
               +7
             </button>
             <button
               onClick={() => setDay(365)}
-              className="border border-border bg-bg px-2.5 py-1 font-mono text-[10px] text-fg-muted transition-colors hover:bg-fg hover:text-bg"
+              className="hidden sm:inline-flex border border-border bg-bg px-2.5 py-1 font-mono text-[10px] text-fg-muted transition-colors hover:bg-fg hover:text-bg"
             >
               ▶▶
             </button>
