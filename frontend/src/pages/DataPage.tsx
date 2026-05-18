@@ -170,10 +170,10 @@ export const DataPage = () => {
       <div className="space-y-3">
         {DATASETS.map((d) => (
           <article key={d.file} className="border border-border bg-bg-elev">
-            <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-border px-5 py-4">
-              <div className="flex items-baseline gap-3">
-                <FileText size={14} className="text-fg-subtle" />
-                <span className="font-mono text-sm font-bold text-fg">
+            <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-border px-4 py-3 sm:px-5 sm:py-4">
+              <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
+                <FileText size={14} className="text-fg-subtle shrink-0" />
+                <span className="break-all font-mono text-[13px] font-bold text-fg sm:text-sm">
                   {d.file}.parquet
                 </span>
                 <span className="font-mono text-[10px] tabular-nums text-fg-subtle">
@@ -183,16 +183,16 @@ export const DataPage = () => {
               <a
                 href={`${import.meta.env.BASE_URL}data/${d.file}.parquet`}
                 download
-                className="inline-flex items-center gap-2 border border-fg bg-bg px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg transition-colors hover:bg-fg hover:text-bg"
+                className="inline-flex shrink-0 items-center gap-2 border border-fg bg-bg px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg transition-colors hover:bg-fg hover:text-bg"
               >
                 <Download size={11} />
                 {t.common.download}
               </a>
             </header>
-            <div className="px-5 py-3">
+            <div className="px-4 py-3 sm:px-5">
               <p className="font-serif text-sm italic text-fg-muted">{d.description[locale]}</p>
             </div>
-            <div className="border-t border-border bg-bg-subtle px-5 py-3">
+            <div className="border-t border-border bg-bg-subtle px-4 py-3 sm:px-5">
               <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-fg-subtle">
                 {t.data.columns}
               </div>

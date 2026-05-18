@@ -250,13 +250,13 @@ export const GuidePage = () => {
       </header>
 
       <section className="border border-border bg-bg-elev">
-        <div className="flex border-b border-border">
+        <div className="flex flex-wrap border-b border-border">
           {TABS.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActive(tab.id)}
               className={cn(
-                'border-r border-border px-6 py-3 font-mono text-[11px] font-bold uppercase tracking-[0.2em] transition-colors',
+                'flex-1 border-r border-border px-4 py-3 font-mono text-[11px] font-bold uppercase tracking-[0.2em] transition-colors sm:flex-none sm:px-6',
                 active === tab.id
                   ? 'bg-bg text-fg border-b-2 border-b-accent'
                   : 'text-fg-subtle hover:bg-bg-subtle hover:text-fg',
