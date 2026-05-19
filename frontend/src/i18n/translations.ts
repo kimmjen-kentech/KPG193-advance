@@ -8,6 +8,7 @@ export interface Translation {
     data: string;
     methodology: string;
     guide: string;
+    simulation: string;
   };
   common: {
     loading: string;
@@ -123,6 +124,45 @@ export interface Translation {
     fullCitation: string;
     repository: string;
   };
+  simulation: {
+    label: string;
+    title: string;
+    tagline: string;
+    sections: {
+      comparison: string;
+      freqResponse: string;
+      architecture: string;
+      results: string;
+    };
+    emt: {
+      title: string;
+      desc: string;
+      timestep: string;
+      scale: string;
+      tool: string;
+    };
+    rms: {
+      title: string;
+      desc: string;
+      timestep: string;
+      scale: string;
+      tool: string;
+    };
+    freqChartTitle: string;
+    freqChartCaption: string;
+    eventLabel: string;
+    archTitle: string;
+    archCaption: string;
+    kpi: {
+      activePowerError: string;
+      reactivePowerError: string;
+      voltageError: string;
+      phaseError: string;
+      freqDrop: string;
+      recovery: string;
+    };
+    resultsCaption: string;
+  };
 }
 
 const ko: Translation = {
@@ -133,6 +173,7 @@ const ko: Translation = {
     data: '데이터',
     methodology: '방법론',
     guide: '가이드',
+    simulation: '시뮬레이션',
   },
   common: {
     loading: '불러오는 중',
@@ -275,6 +316,45 @@ const ko: Translation = {
     fullCitation: '전체 BibTeX는 방법론 페이지 참조',
     repository: '저장소',
   },
+  simulation: {
+    label: 'Realtime_Cosimulation',
+    title: 'Co-simulation.',
+    tagline: 'KPG-193 전국전력망을 멀티코어 실시간 시뮬레이터(SPEEDGOAT)에서 구동하기 위한 EMT·RMS 혼합 Co-simulation 구현 및 검증.',
+    sections: {
+      comparison: 'EMT vs RMS',
+      freqResponse: '주파수 응답',
+      architecture: 'Co-simulation 구조',
+      results: '검증 결과',
+    },
+    emt: {
+      title: 'EMT',
+      desc: '전압·전류의 순간 파형을 시간 영역에서 직접 계산. 전력전자·스위칭·빠른 과도현상 해석에 적합.',
+      timestep: '2 ~ 50 μs',
+      scale: '100모선 이하',
+      tool: 'PSCAD / EMTP',
+    },
+    rms: {
+      title: 'RMS',
+      desc: '기본파의 크기와 위상(페이저)만 계산. 빠른 속도로 대규모 계통 장시간 안정도 해석에 적합.',
+      timestep: '50 ~ 200 ms',
+      scale: '1,000모선 이상',
+      tool: 'PSS/E / TSAT',
+    },
+    freqChartTitle: '발전기 탈락 시나리오 — 주파수 응답',
+    freqChartCaption: '총 발전량 17,600 MW 중 270 MW(1.5%) 순시 탈락. 관성·Governor 응답으로 수초 내 회복.',
+    eventLabel: 't=20s 발전원 탈락',
+    archTitle: 'RMS-EMT Multi-core Co-simulation',
+    archCaption: 'KPG-193을 서브 네트워크로 분할. Core 1(RMS, 2,000 μs)이 광역망을, Core 2(EMT, 50 μs)가 상세 해석 영역을 담당. 경계면에서 ITM 인터페이스로 실시간 데이터 교환.',
+    kpi: {
+      activePowerError: '유효전력 오차',
+      reactivePowerError: '무효전력 오차',
+      voltageError: '전압 오차',
+      phaseError: '위상각 오차',
+      freqDrop: '최저 주파수',
+      recovery: '회복 시간',
+    },
+    resultsCaption: 'KPG-193 전체 계통 SPEEDGOAT 실시간 시뮬레이션 검증 결과 (2026-05-19)',
+  },
 };
 
 const en: Translation = {
@@ -285,6 +365,7 @@ const en: Translation = {
     data: 'Data',
     methodology: 'Methodology',
     guide: 'Guide',
+    simulation: 'Simulation',
   },
   common: {
     loading: 'loading',
@@ -433,6 +514,45 @@ const en: Translation = {
     citeAs: 'Cite as',
     fullCitation: 'Full BibTeX on methodology page',
     repository: 'Repository',
+  },
+  simulation: {
+    label: 'Realtime_Cosimulation',
+    title: 'Co-simulation.',
+    tagline: 'Multi-core real-time co-simulation of the KPG-193 national grid on SPEEDGOAT, combining EMT and RMS solvers across distributed cores.',
+    sections: {
+      comparison: 'EMT vs RMS',
+      freqResponse: 'Frequency Response',
+      architecture: 'Co-simulation Architecture',
+      results: 'Validation Results',
+    },
+    emt: {
+      title: 'EMT',
+      desc: 'Computes instantaneous voltage and current waveforms in the time domain. Suited for power electronics, switching, and fast electromagnetic transients.',
+      timestep: '2 ~ 50 μs',
+      scale: '< 100 buses',
+      tool: 'PSCAD / EMTP',
+    },
+    rms: {
+      title: 'RMS',
+      desc: 'Computes only the magnitude and phase (phasor) of the fundamental. Enables fast, large-scale stability analysis over long horizons.',
+      timestep: '50 ~ 200 ms',
+      scale: '> 1,000 buses',
+      tool: 'PSS/E / TSAT',
+    },
+    freqChartTitle: 'Generator Trip Scenario — Frequency Response',
+    freqChartCaption: '270 MW instant trip from 17,600 MW total generation (1.5%). Frequency recovered within seconds via inertia and governor response.',
+    eventLabel: 't=20s generator trip',
+    archTitle: 'RMS-EMT Multi-core Co-simulation',
+    archCaption: 'KPG-193 partitioned into sub-networks. Core 1 (RMS, 2,000 μs) covers the wide-area grid; Core 2 (EMT, 50 μs) handles the detailed subsystem. Boundary data exchanged in real-time via ITM interface.',
+    kpi: {
+      activePowerError: 'Active Power Error',
+      reactivePowerError: 'Reactive Power Error',
+      voltageError: 'Voltage Error',
+      phaseError: 'Phase Angle Error',
+      freqDrop: 'Frequency Nadir',
+      recovery: 'Recovery Time',
+    },
+    resultsCaption: 'KPG-193 full-system SPEEDGOAT real-time simulation validation (2026-05-19)',
   },
 };
 

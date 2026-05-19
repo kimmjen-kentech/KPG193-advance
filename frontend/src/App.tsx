@@ -7,6 +7,7 @@ import { DataPage } from './pages/DataPage';
 import { MethodologyPage } from './pages/MethodologyPage';
 import { GuidePage } from './pages/GuidePage';
 import { PinPage } from './pages/PinPage';
+import { SimulationPage } from './pages/SimulationPage';
 
 const NetworkPage = lazy(() =>
   import('./pages/NetworkPage').then((m) => ({ default: m.NetworkPage })),
@@ -50,6 +51,7 @@ export default function App() {
           <Route path="data" element={<DataPage />} />
           <Route path="methodology" element={<MethodologyPage />} />
           <Route path="guide" element={<GuidePage />} />
+          <Route path="simulation" element={<SimulationPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
