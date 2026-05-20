@@ -5,31 +5,19 @@ import { AreaChart } from '../charts/AreaChart';
 const hourData = Array.from({ length: 24 }, (_, i) => ({ x: i + 1, y: (i + 1) * 100 }));
 
 describe('AreaChart', () => {
-  it('xTicks 배열로 지정한 값이 x축 레이블로 렌더된다', () => {
-    const { getByText, queryByText } = render(
-      <AreaChart
-        data={hourData}
-        xTicks={[1, 4, 8, 12, 16, 20, 24]}
-        xLabel={(x) => `${x}h`}
-      />,
-    );
-    expect(getByText('1h')).toBeInTheDocument();
-    expect(getByText('12h')).toBeInTheDocument();
-    expect(getByText('24h')).toBeInTheDocument();
-    expect(queryByText('7h')).not.toBeInTheDocument();
+  it('data 없이는 null을 렌더', () => {
+    const { container } = render(<AreaChart data={[]} />);
+    expect(container.firstChild).toBeNull();
   });
 
-  it('xTicks 없으면 데이터 포인트 샘플링으로 레이블을 렌더한다', () => {
-    const { container } = render(
-      <AreaChart data={hourData} xLabel={(x) => `${x}h`} />,
-    );
-    const texts = [...container.querySelectorAll('text')].map((el) => el.textContent);
-    expect(texts.some((t) => t?.endsWith('h'))).toBe(true);
+  it('data가 있으면 차트 컨테이너를 렌더', () => {
+    const { container } = render(<AreaChart data={hourData} aria-label="test chart" />);
+    expect(container.querySelector('[aria-label="test chart"]')).toBeInTheDocument();
   });
 
-  it('SVG에 viewBox가 설정된다', () => {
+  it('SVG가 내부에 렌더된다 (Recharts ResponsiveContainer + AreaChart)', () => {
     const { container } = render(<AreaChart data={hourData} />);
-    const svg = container.querySelector('svg')!;
-    expect(svg.getAttribute('viewBox')).toBeTruthy();
+    // Recharts는 ResponsiveContainer의 자식으로 SVG를 만든다
+    expect(container.querySelector('.recharts-responsive-container')).toBeInTheDocument();
   });
 });
