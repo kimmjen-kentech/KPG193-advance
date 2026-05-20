@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useI18n } from '../../hooks/useI18n';
 import { SectionHeader } from '../ui/SectionHeader';
 import { LineSeriesChart } from '../charts/LineSeriesChart';
@@ -23,7 +23,21 @@ const SIM_LEN = 60;
 const STEP = 0.1;
 const TAU = 3.5; // governor recovery time constant (s)
 
-const buildSeries = (s: Scenario) => {
+// 트립량(MW)으로부터 ROCOF·Nadir·Steady-state offset 산출
+// 기준점(50/270/500 MW)에 대한 선형 보간 — KPG-193 17,600 MW 기반
+const paramsFromTripMw = (tripMw: number): Omit<Scenario, 'color'> => {
+  // ROCOF ≈ trip / (2·H·S_base), H≈4s, S_base=17,600 MW
+  // 0.04 Hz/s per 50 MW (linear)
+  const rocof = parseFloat((tripMw * 0.00064).toFixed(4));
+  // Governor steady-state droop: -0.02 Hz per 270 MW
+  const steady = parseFloat((-tripMw * 0.0000741).toFixed(4));
+  // Nadir: linear approx 60 - 0.075% * tripMw, bounded
+  const nadirRaw = 60 - tripMw * 0.00072;
+  const nadirHz = parseFloat(Math.max(58.0, nadirRaw).toFixed(4));
+  return { tripMw, rocofHzPerS: rocof, nadirHz, steadyOffset: steady };
+};
+
+const buildSeries = (s: Pick<Scenario, 'tripMw' | 'rocofHzPerS' | 'nadirHz' | 'steadyOffset'>) => {
   const pts: { x: number; y: number }[] = [];
   for (let t = 0; t <= SIM_LEN; t += STEP) {
     let f: number;
@@ -50,6 +64,7 @@ const buildSeries = (s: Scenario) => {
 export const ScenarioSection = ({ number }: { number: string }) => {
   const { t } = useI18n();
   const s = t.simulation.scenarios;
+  const [liveTripMw, setLiveTripMw] = useState(270);
 
   const series = useMemo(
     () =>
@@ -59,6 +74,19 @@ export const ScenarioSection = ({ number }: { number: string }) => {
         points: buildSeries(sc),
       })),
     [],
+  );
+
+  const liveParams = useMemo(() => paramsFromTripMw(liveTripMw), [liveTripMw]);
+  const liveSeries = useMemo(
+    () => [
+      {
+        name: `${liveTripMw} MW`,
+        color: 'var(--accent)',
+        fill: true,
+        points: buildSeries(liveParams),
+      },
+    ],
+    [liveParams, liveTripMw],
   );
 
   return (
@@ -128,6 +156,45 @@ export const ScenarioSection = ({ number }: { number: string }) => {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Interactive trip slider — live recomputation */}
+      <div className="border border-accent bg-bg-elev p-4 sm:p-6">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span className="bg-accent px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-accent-fg">
+              Interactive
+            </span>
+            <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg">
+              Trip = {liveTripMw} MW
+            </span>
+          </div>
+          <div className="flex gap-3 font-mono text-[10px] tabular-nums text-fg-muted">
+            <span>Nadir <span className="text-fg">{liveParams.nadirHz.toFixed(2)} Hz</span></span>
+            <span>ROCOF <span className="text-fg">-{liveParams.rocofHzPerS.toFixed(3)} Hz/s</span></span>
+          </div>
+        </div>
+        <input
+          type="range"
+          min={10}
+          max={1000}
+          step={10}
+          value={liveTripMw}
+          onChange={(e) => setLiveTripMw(parseInt(e.target.value))}
+          className="mb-4 w-full accent-[var(--accent)]"
+          aria-label="Trip size in MW"
+        />
+        <div className="h-48 sm:h-56">
+          <LineSeriesChart
+            series={liveSeries}
+            yMin={Math.min(58.5, liveParams.nadirHz - 0.1)}
+            yMax={60.1}
+            xTicks={[0, 10, 20, 30, 40, 50, 60]}
+            xLabel={(x) => `${x}s`}
+            yLabel={(y) => y.toFixed(2)}
+            vLine={{ x: TRIP_TIME, label: 'Trip' }}
+          />
+        </div>
       </div>
     </section>
   );

@@ -24,7 +24,13 @@ const dayToDate = (day: number): string => {
 // 월별 day 시작점 (Jan 1, Feb 1, …)
 const MONTH_TICKS = [1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335];
 
-export const AnnualSection = ({ number }: { number: string }) => {
+export const AnnualSection = ({
+  number,
+  onDayClick,
+}: {
+  number: string;
+  onDayClick?: (day: number) => void;
+}) => {
   const { t } = useI18n();
   const { mode } = useDecimal();
   const demand = useQuery<AnnualDemandRow>(annualDemandSQL);
@@ -138,6 +144,11 @@ export const AnnualSection = ({ number }: { number: string }) => {
               {t.profiles.annualDemandTitle}
             </span>
           </div>
+          {onDayClick && (
+            <span className="font-mono text-[9px] uppercase tracking-[0.15em] text-fg-subtle">
+              {t.profiles.clickToFocus}
+            </span>
+          )}
         </div>
         <div className="h-48 sm:h-56">
           {demand.loading && <Skeleton className="h-full w-full" />}
@@ -147,6 +158,7 @@ export const AnnualSection = ({ number }: { number: string }) => {
               xTicks={MONTH_TICKS}
               xLabel={(x) => dayToDate(x).split(' ')[0]}
               yLabel={(y) => `${(y / 1000).toFixed(0)}k`}
+              onChartClick={onDayClick ? (x) => onDayClick(Math.round(x)) : undefined}
             />
           )}
         </div>
