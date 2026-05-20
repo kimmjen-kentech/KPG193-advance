@@ -4,7 +4,7 @@ import { ScatterplotLayer, LineLayer, PathLayer, IconLayer } from 'deck.gl';
 import type { PickingInfo } from 'deck.gl';
 import { Map as MapLibre } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { ChevronRight, CornerDownRight, Cable, X, List } from 'lucide-react';
+import { X, List } from 'lucide-react';
 import { useQuery } from '../hooks/useQuery';
 import {
   networkBusesSQL,
@@ -18,8 +18,11 @@ import {
   type NetworkGenerator,
   type NetworkBusGenMix,
 } from '../lib/queries';
-import { toDisplay } from '../utils/decimal';
 import { useTheme } from '../hooks/useTheme';
+import { BusDetail } from '../components/network/BusDetail';
+import { BranchDetail } from '../components/network/BranchDetail';
+import { BusList } from '../components/network/BusList';
+import { branchKey, busLabel } from '../components/network/networkUtils';
 import { getFuelIconUrl, FUEL_ICON_SIZE, FUEL_ICON_SVG } from '../lib/fuelIcons';
 import { FUEL_COLORS_HEX } from '../lib/constants';
 import { generateAllPieIcons, type PieIcon } from '../lib/pieIcon';
@@ -62,9 +65,6 @@ type Selection =
   | { kind: 'branch'; branch: NetworkBranch }
   | null;
 
-const branchKey = (b: NetworkBranch) => `${b.from_id}-${b.to_id}-${b.kv}-${b.rate_mva}`;
-
-const busLabel = (id: number, name: string) => `#${String(id).padStart(3, '0')}. ${name}`;
 
 export const NetworkPage = () => {
   const { theme } = useTheme();
@@ -566,251 +566,6 @@ export const NetworkPage = () => {
   );
 };
 
-const BusDetail = ({
-  bus,
-  branches,
-  busMap,
-  onClose,
-  onSelectBranch,
-  onSelectBus,
-}: {
-  bus: NetworkBus;
-  branches: NetworkBranch[];
-  busMap: Map<number, NetworkBus>;
-  onClose: () => void;
-  onSelectBranch: (b: NetworkBranch) => void;
-  onSelectBus: (id: number) => void;
-}) => (
-  <div className="space-y-6 p-5">
-    <div className="flex items-start justify-between">
-      <div>
-        <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-fg-subtle">
-          Node_Identifier
-        </div>
-        <h3 className="mt-1 font-mono text-2xl font-bold tracking-tight text-fg tabular-nums">
-          {busLabel(bus.id, bus.name_kr)}
-        </h3>
-        <p className="font-mono text-[10px] uppercase tracking-tight text-fg-muted">
-          {bus.name_en}
-        </p>
-      </div>
-      <button
-        onClick={onClose}
-        className="border border-border p-1.5 text-fg transition-colors hover:bg-fg hover:text-bg"
-      >
-        <ChevronRight size={14} />
-      </button>
-    </div>
-
-    <div className="grid grid-cols-2 gap-px border border-border bg-border">
-      <Cell label="Voltage">
-        <span className="font-mono text-base tabular-nums">{Math.round(bus.kv)} kV</span>
-      </Cell>
-      <Cell label="Area">
-        <span className="font-mono text-base tabular-nums">{bus.area}</span>
-      </Cell>
-      <Cell label="Pd (active)" colSpan={2}>
-        <span className="font-mono text-xs tabular-nums">
-          {toDisplay(bus.pd, { grouping: true, suffix: ' MW' })}
-        </span>
-      </Cell>
-      <Cell label="Qd (reactive)" colSpan={2}>
-        <span className="font-mono text-xs tabular-nums">
-          {toDisplay(bus.qd, { grouping: true, suffix: ' MVAr' })}
-        </span>
-      </Cell>
-      <Cell label="Coordinates" colSpan={2}>
-        <span className="font-mono text-[10px] uppercase tracking-tight text-fg-muted">
-          LAT {bus.lat.toFixed(4)}N // LNG {bus.lng.toFixed(4)}E
-        </span>
-      </Cell>
-    </div>
-
-    <div>
-      <div className="mb-3 flex items-center justify-between">
-        <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg">
-          Connected Branches
-        </span>
-        <span className="bg-bg-subtle px-2 py-0.5 font-mono text-[9px] text-fg-muted">
-          {branches.length}
-        </span>
-      </div>
-      <div className="border-t border-border">
-        {branches.map((br) => {
-          const otherId = br.from_id === bus.id ? br.to_id : br.from_id;
-          const other = busMap.get(otherId);
-          return (
-            <button
-              key={branchKey(br)}
-              onClick={() => onSelectBranch(br)}
-              className="group grid w-full grid-cols-[1fr_auto] items-center gap-2 border-b border-border/40 py-2.5 text-left transition-colors hover:bg-bg-subtle"
-            >
-              <div className="flex items-center gap-2 min-w-0">
-                <CornerDownRight size={12} className="text-fg-subtle shrink-0" />
-                <span className="font-mono text-[11px] text-fg truncate">
-                  → {other ? busLabel(otherId, other.name_kr) : `#${otherId}`}
-                </span>
-                <span
-                  className="ml-auto shrink-0 cursor-pointer font-mono text-[9px] text-fg-subtle hover:text-fg"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onSelectBus(otherId);
-                  }}
-                >
-                  ↗
-                </span>
-              </div>
-              <span className="bg-bg-subtle px-2 py-0.5 font-mono text-[10px] text-fg-muted whitespace-nowrap">
-                {Math.round(br.kv)}kV · {toDisplay(br.rate_mva, { grouping: true })} MVA
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  </div>
-);
-
-const BranchDetail = ({
-  branch,
-  connected,
-  busMap,
-  onClose,
-  onSelectBranch,
-  onSelectBus,
-}: {
-  branch: NetworkBranch;
-  connected: NetworkBranch[];
-  busMap: Map<number, NetworkBus>;
-  onClose: () => void;
-  onSelectBranch: (b: NetworkBranch) => void;
-  onSelectBus: (id: number) => void;
-}) => {
-  const from = busMap.get(branch.from_id);
-  const to = busMap.get(branch.to_id);
-  return (
-    <div className="space-y-6 p-5">
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-fg-subtle">
-            Branch_Identifier
-          </div>
-          <h3 className="mt-1 flex items-center gap-2 font-mono text-base font-bold text-fg">
-            <Cable size={14} />
-            <span className="tabular-nums">{Math.round(branch.kv)} kV</span>
-          </h3>
-        </div>
-        <button
-          onClick={onClose}
-          className="border border-border p-1.5 text-fg transition-colors hover:bg-fg hover:text-bg"
-        >
-          <ChevronRight size={14} />
-        </button>
-      </div>
-
-      <div className="space-y-3">
-        <BusBtn label="From" bus={from} id={branch.from_id} onClick={onSelectBus} />
-        <BusBtn label="To" bus={to} id={branch.to_id} onClick={onSelectBus} />
-      </div>
-
-      <div className="grid grid-cols-2 gap-px border border-border bg-border">
-        <Cell label="Voltage">
-          <span className="font-mono text-base tabular-nums">{Math.round(branch.kv)} kV</span>
-        </Cell>
-        <Cell label="Rating">
-          <span className="font-mono text-xs tabular-nums">
-            {toDisplay(branch.rate_mva, { grouping: true })} MVA
-          </span>
-        </Cell>
-      </div>
-
-      <div>
-        <div className="mb-3 flex items-center justify-between">
-          <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg">
-            Connected Branches
-          </span>
-          <span className="bg-bg-subtle px-2 py-0.5 font-mono text-[9px] text-fg-muted">
-            {connected.length}
-          </span>
-        </div>
-        <div className="border-t border-border">
-          {connected.map((br) => {
-            const f = busMap.get(br.from_id);
-            const t = busMap.get(br.to_id);
-            return (
-              <button
-                key={branchKey(br)}
-                onClick={() => onSelectBranch(br)}
-                className="grid w-full grid-cols-[1fr_auto] items-center gap-2 border-b border-border/40 py-2.5 text-left transition-colors hover:bg-bg-subtle"
-              >
-                <div className="flex items-center gap-2 min-w-0">
-                  <CornerDownRight size={12} className="text-fg-subtle shrink-0" />
-                  <span className="font-mono text-[11px] text-fg truncate">
-                    {f ? busLabel(br.from_id, f.name_kr) : `#${br.from_id}`}
-                    {' → '}
-                    {t ? busLabel(br.to_id, t.name_kr) : `#${br.to_id}`}
-                  </span>
-                </div>
-                <span className="bg-bg-subtle px-2 py-0.5 font-mono text-[10px] text-fg-muted whitespace-nowrap">
-                  {Math.round(br.kv)}kV
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const BusBtn = ({
-  label,
-  bus,
-  id,
-  onClick,
-}: {
-  label: string;
-  bus: NetworkBus | undefined;
-  id: number;
-  onClick: (id: number) => void;
-}) => (
-  <button
-    onClick={() => onClick(id)}
-    className="group flex w-full items-center justify-between border border-border bg-bg-elev p-3 text-left transition-colors hover:bg-bg-subtle"
-  >
-    <div>
-      <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-fg-subtle">
-        {label}
-      </div>
-      <div className="font-mono text-sm font-bold tracking-tight tabular-nums text-fg">
-        {bus ? busLabel(id, bus.name_kr) : `#${String(id).padStart(3, '0')}`}
-      </div>
-      {bus && (
-        <div className="font-mono text-[10px] text-fg-muted">
-          {bus.name_en} · {Math.round(bus.kv)} kV
-        </div>
-      )}
-    </div>
-    <ChevronRight size={14} className="text-fg-subtle group-hover:text-fg" />
-  </button>
-);
-
-const Cell = ({
-  label,
-  children,
-  colSpan = 1,
-}: {
-  label: string;
-  children: React.ReactNode;
-  colSpan?: 1 | 2;
-}) => (
-  <div className={`bg-bg-elev p-3 ${colSpan === 2 ? 'col-span-2' : ''}`}>
-    <div className="mb-1 font-mono text-[9px] uppercase tracking-[0.2em] text-fg-subtle">
-      {label}
-    </div>
-    {children}
-  </div>
-);
 
 const PieTooltip = ({
   pie,
@@ -878,35 +633,3 @@ const FuelLegendRow = ({
   </div>
 );
 
-const BusList = ({
-  buses,
-  onSelect,
-}: {
-  buses: NetworkBus[];
-  onSelect: (id: number) => void;
-}) => (
-  <div>
-    <div className="sticky top-0 z-10 grid grid-cols-[44px_1fr_60px] border-b border-border bg-bg-subtle px-5 py-2 font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-fg-subtle">
-      <span>ID</span>
-      <span>Name</span>
-      <span className="text-right">kV</span>
-    </div>
-    {buses.map((bus) => (
-      <button
-        key={bus.id}
-        onClick={() => onSelect(bus.id)}
-        className="grid w-full grid-cols-[44px_1fr_60px] items-center border-b border-border/30 px-5 py-2 text-left transition-colors hover:bg-fg hover:text-bg"
-      >
-        <span className="font-mono text-[10px] text-fg-subtle">
-          #{String(bus.id).padStart(3, '0')}
-        </span>
-        <span className="font-mono text-xs font-bold uppercase tracking-tight">
-          {bus.name_kr}
-        </span>
-        <span className="text-right font-mono text-xs tabular-nums text-fg-muted">
-          {Math.round(bus.kv)}
-        </span>
-      </button>
-    ))}
-  </div>
-);
