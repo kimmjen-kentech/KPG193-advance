@@ -217,6 +217,54 @@ export const profileRenewablesSQL = (day: number, busId: number | null = null) =
   ORDER BY hour
 `;
 
+/**
+ * 365일 일별 수요 집계: 일별 피크/평균/총량.
+ * profile_demand 전체(1.69M rows) 스캔이라 한 번만 실행 권장.
+ */
+export const annualDemandSQL = `
+  WITH hourly AS (
+    SELECT day, hour, SUM(demandP)::DOUBLE AS hourly_mw
+    FROM '${u('profile_demand')}'
+    GROUP BY day, hour
+  )
+  SELECT
+    day::INTEGER AS day,
+    MAX(hourly_mw) AS peak_mw,
+    AVG(hourly_mw) AS avg_mw,
+    SUM(hourly_mw) AS total_mwh
+  FROM hourly
+  GROUP BY day
+  ORDER BY day
+`;
+
+export interface AnnualDemandRow {
+  day: number;
+  peak_mw: number;
+  avg_mw: number;
+  total_mwh: number;
+}
+
+/**
+ * 365일 재생에너지 일평균 용량계수 (solar/wind/hydro).
+ */
+export const annualRenewablesSQL = `
+  SELECT
+    day::INTEGER AS day,
+    AVG(pv_profile_ratio)::DOUBLE AS solar,
+    AVG(wind_profile_ratio)::DOUBLE AS wind,
+    AVG(hydro_profile_ratio)::DOUBLE AS hydro
+  FROM '${u('profile_renewables')}'
+  GROUP BY day
+  ORDER BY day
+`;
+
+export interface AnnualRenewablesRow {
+  day: number;
+  solar: number;
+  wind: number;
+  hydro: number;
+}
+
 export const busListSQL = `
   SELECT bus_id::INTEGER AS id, name_Korean AS name_kr, name_English AS name_en
   FROM '${u('bus_location')}'

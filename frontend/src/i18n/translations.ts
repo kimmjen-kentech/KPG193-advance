@@ -93,6 +93,15 @@ export interface Translation {
     temperature: string;
     windSpeed: string;
     noWeatherData: string;
+    annualSection: string;
+    annualDemandTitle: string;
+    annualDemandCaption: string;
+    annualRenewablesTitle: string;
+    annualRenewablesCaption: string;
+    annualPeakDay: string;
+    annualMinDay: string;
+    annualTotalEnergy: string;
+    clickToFocus: string;
   };
   data: {
     label: string;
@@ -147,6 +156,7 @@ export interface Translation {
       modeling: string;
       autoGrid: string;
       coSimTypes: string;
+      scenarios: string;
       freqResponse: string;
       voltageResponse: string;
       architecture: string;
@@ -185,6 +195,15 @@ export interface Translation {
       vpError: string;
       timeSaved: string;
       timeSavedValue: string;
+    };
+    scenarios: {
+      title: string;
+      intro: string;
+      tripLabel: string;
+      mwLabel: string;
+      nadirLabel: string;
+      rocofLabel: string;
+      caption: string;
     };
     coSimTypes: {
       intro: string;
@@ -348,6 +367,15 @@ const ko: Translation = {
     temperature: '기온',
     windSpeed: '풍속',
     noWeatherData: '해당 일자의 날씨 데이터 없음.',
+    annualSection: '연간 개요',
+    annualDemandTitle: '일별 피크 수요 — 365일',
+    annualDemandCaption: '각 일의 시간별 합산 중 최댓값. 여름·겨울 피크 패턴 확인.',
+    annualRenewablesTitle: '일평균 재생에너지 용량계수 — 365일',
+    annualRenewablesCaption: '버스별 평균 PV/풍력/수력 일평균 비율. 계절성 가시화.',
+    annualPeakDay: '연중 최대 피크',
+    annualMinDay: '연중 최저',
+    annualTotalEnergy: '연간 총 에너지',
+    clickToFocus: '차트의 일자를 클릭하면 해당 날짜로 이동',
   },
   data: {
     label: 'Data_Catalog',
@@ -422,6 +450,7 @@ const ko: Translation = {
       modeling: '계통 모델링',
       autoGrid: 'AutoGrid 자동 생성',
       coSimTypes: 'Co-simulation 3종',
+      scenarios: '시나리오 비교',
       freqResponse: '주파수 응답',
       voltageResponse: '전압 응답',
       architecture: 'Co-simulation 구조',
@@ -460,6 +489,15 @@ const ko: Translation = {
       vpError: 'V/P 오차',
       timeSaved: '작업 시간',
       timeSavedValue: '일 → 분',
+    },
+    scenarios: {
+      title: '트립 크기별 주파수 응답',
+      intro: '동일한 KPG-193 계통에서 발전원 탈락량만 바꿨을 때 주파수 응답 비교. 손실이 클수록 ROCOF 가팔라지고 nadir 깊어짐.',
+      tripLabel: '탈락량',
+      mwLabel: 'MW',
+      nadirLabel: 'Nadir',
+      rocofLabel: 'ROCOF',
+      caption: 'Governor·관성 모델 동일, 트립 크기만 변경. nadir와 ROCOF는 손실량에 거의 선형.',
     },
     coSimTypes: {
       intro: '경계면에서 ITM (Ideal Transformer Model) 인터페이스로 데이터 교환. 양쪽 영역의 해석 방식에 따라 3가지 조합.',
@@ -625,6 +663,15 @@ const en: Translation = {
     temperature: 'Temperature',
     windSpeed: 'Wind Speed',
     noWeatherData: 'No weather data for this day.',
+    annualSection: 'Annual Overview',
+    annualDemandTitle: 'Daily Peak Demand — 365 days',
+    annualDemandCaption: 'Maximum hourly system demand per day. Reveals summer / winter peak patterns.',
+    annualRenewablesTitle: 'Daily Average Renewable Capacity Factor — 365 days',
+    annualRenewablesCaption: 'System-wide mean PV / wind / hydro daily capacity factor. Highlights seasonal swings.',
+    annualPeakDay: 'Annual Peak',
+    annualMinDay: 'Annual Low',
+    annualTotalEnergy: 'Annual Total Energy',
+    clickToFocus: 'Click a day in the chart to jump to that date below',
   },
   data: {
     label: 'Data_Catalog',
@@ -704,6 +751,7 @@ const en: Translation = {
       modeling: 'Grid Modeling',
       autoGrid: 'AutoGrid Pipeline',
       coSimTypes: 'Co-simulation Types',
+      scenarios: 'Scenario Comparison',
       freqResponse: 'Frequency Response',
       voltageResponse: 'Voltage Response',
       architecture: 'Co-simulation Architecture',
@@ -742,6 +790,15 @@ const en: Translation = {
       vpError: 'V/P Error',
       timeSaved: 'Time Saved',
       timeSavedValue: 'Days → Minutes',
+    },
+    scenarios: {
+      title: 'Frequency Response vs Trip Size',
+      intro: 'Same KPG-193 grid, only the lost generation changes. Larger losses steepen ROCOF and deepen the nadir.',
+      tripLabel: 'Trip',
+      mwLabel: 'MW',
+      nadirLabel: 'Nadir',
+      rocofLabel: 'ROCOF',
+      caption: 'Identical governor and inertia models — only the trip size varies. Nadir and ROCOF scale roughly linearly with loss.',
     },
     coSimTypes: {
       intro: 'Boundary data exchanged via ITM (Ideal Transformer Model). Three combinations based on the solver type of each partition.',

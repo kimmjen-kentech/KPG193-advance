@@ -11,11 +11,21 @@ const renderSim = () =>
   );
 
 describe('SimulationPage', () => {
-  it('8개 섹션 헤더가 표시된다', () => {
+  it('9개 섹션 헤더가 표시된다', () => {
     renderSim();
-    ['01', '02', '03', '04', '05', '06', '07', '08'].forEach((n) => {
+    ['01', '02', '03', '04', '05', '06', '07', '08', '09'].forEach((n) => {
       expect(screen.getByText(n)).toBeInTheDocument();
     });
+  });
+
+  it('Scenario 섹션이 트립 크기별 ROCOF/Nadir 값을 보여준다', () => {
+    renderSim();
+    // KPI 테이블에 트립 MW 값 행 존재
+    expect(screen.getByText('50')).toBeInTheDocument();
+    expect(screen.getByText('500')).toBeInTheDocument();
+    // Nadir / ROCOF 값
+    expect(screen.getByText('59.92 Hz')).toBeInTheDocument();
+    expect(screen.getByText('59.36 Hz')).toBeInTheDocument();
   });
 
   it('EMT와 RMS 비교 카드가 표시된다', () => {
