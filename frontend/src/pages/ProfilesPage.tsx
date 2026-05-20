@@ -1,14 +1,16 @@
 import { useMemo, useState } from 'react';
-import { Activity, Sun, Flame, X } from 'lucide-react';
+import { Activity, Sun, Flame, CloudRain, X } from 'lucide-react';
 import { useQuery } from '../hooks/useQuery';
 import {
   profileDemandSQL,
   profileRenewablesSQL,
   commitmentByFuelSQL,
+  profileWeatherSQL,
   busListSQL,
   type ProfileDemandRow,
   type ProfileRenewablesRow,
   type CommitmentByFuelRow,
+  type ProfileWeatherRow,
   type BusListRow,
 } from '../lib/queries';
 import { AreaChart } from '../components/charts/AreaChart';
@@ -37,6 +39,7 @@ export const ProfilesPage = () => {
   const demand = useQuery<ProfileDemandRow>(profileDemandSQL(day, busId));
   const renewables = useQuery<ProfileRenewablesRow>(profileRenewablesSQL(day, busId));
   const commitment = useQuery<CommitmentByFuelRow>(commitmentByFuelSQL(day));
+  const weather = useQuery<ProfileWeatherRow>(profileWeatherSQL(day, busId));
 
   const selectedBus = useMemo(
     () => busList.data?.find((b) => b.id === busId) ?? null,
@@ -85,6 +88,14 @@ export const ProfilesPage = () => {
         .map((r) => ({ x: r.hour, y: r.capacity_on_mw })),
     }));
   }, [commitment.data]);
+
+  const weatherSeries = useMemo(() => {
+    if (!weather.data) return { temp: [], wind: [] };
+    return {
+      temp: [{ name: 'temp', color: '#f97316', points: weather.data.map((d) => ({ x: d.hour, y: d.temp_c })) }],
+      wind: [{ name: 'wind', color: '#38bdf8', points: weather.data.map((d) => ({ x: d.hour, y: d.wind_speed })) }],
+    };
+  }, [weather.data]);
 
   return (
     <div className="space-y-12">
@@ -313,6 +324,48 @@ export const ProfilesPage = () => {
         </div>
       </ChartCard>
 
+      <ChartCard
+        number="04"
+        title={t.profiles.weatherSection}
+        icon={CloudRain}
+        right={
+          <LegendInline
+            items={[
+              [t.profiles.temperature, '#f97316'],
+              [t.profiles.windSpeed, '#38bdf8'],
+            ]}
+          />
+        }
+      >
+        <div className="space-y-4">
+          <div className="h-40 w-full">
+            {weather.loading && <ChartPending />}
+            {weather.error && <QueryError message={weather.error.message} />}
+            {weather.data && weather.data.length > 0 && (
+              <LineSeriesChart
+                series={weatherSeries.temp}
+                xLabel={(x) => `${x}h`}
+                yLabel={(y) => `${y.toFixed(1)}°C`}
+              />
+            )}
+            {weather.data && weather.data.length === 0 && (
+              <div className="flex h-full items-center justify-center font-mono text-[11px] text-fg-subtle">
+                {t.profiles.noWeatherData}
+              </div>
+            )}
+          </div>
+          <div className="h-40 w-full">
+            {weather.data && weather.data.length > 0 && (
+              <LineSeriesChart
+                series={weatherSeries.wind}
+                xLabel={(x) => `${x}h`}
+                yLabel={(y) => `${y.toFixed(1)} m/s`}
+              />
+            )}
+          </div>
+        </div>
+      </ChartCard>
+
       <p className="text-center font-mono text-[10px] uppercase tracking-[0.2em] text-fg-subtle">
         {t.profiles.dataSource}
       </p>
@@ -367,5 +420,11 @@ const LegendInline = ({ items }: { items: [string, string][] }) => (
 const ChartPending = () => (
   <div className="flex h-full flex-col gap-2 py-3">
     <Skeleton className="h-full w-full" />
+  </div>
+);
+
+const QueryError = ({ message }: { message: string }) => (
+  <div className="flex h-full items-center justify-center font-mono text-[11px] text-[#ef4444]">
+    {message}
   </div>
 );

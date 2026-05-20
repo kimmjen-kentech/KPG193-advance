@@ -78,6 +78,10 @@ export interface Translation {
     thermalCommitSystem: string;
     noCommitData: string;
     dataSource: string;
+    weatherSection: string;
+    temperature: string;
+    windSpeed: string;
+    noWeatherData: string;
   };
   data: {
     label: string;
@@ -210,6 +214,10 @@ const ko: Translation = {
     thermalCommitSystem: ' · 시스템 전체',
     noCommitData: '해당 일자의 약정 데이터 없음.',
     dataSource: '데이터 소스 · KPG 193 v1.5 · 8,760h / 365d × 24h × 193 buses',
+    weatherSection: '날씨',
+    temperature: '기온',
+    windSpeed: '풍속',
+    noWeatherData: '해당 일자의 날씨 데이터 없음.',
   },
   data: {
     label: 'Data_Catalog',
@@ -364,6 +372,10 @@ const en: Translation = {
     thermalCommitSystem: ' · system-wide',
     noCommitData: 'No commitment data for this day.',
     dataSource: 'Data source · KPG 193 v1.5 · 8,760 h / 365 d × 24 h × 193 buses',
+    weatherSection: 'Weather',
+    temperature: 'Temperature',
+    windSpeed: 'Wind Speed',
+    noWeatherData: 'No weather data for this day.',
   },
   data: {
     label: 'Data_Catalog',
