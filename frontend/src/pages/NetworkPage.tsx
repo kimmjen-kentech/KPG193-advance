@@ -346,7 +346,7 @@ export const NetworkPage = () => {
               className="absolute bottom-3 right-3 z-20 flex items-center gap-2 border border-fg bg-bg px-3 py-2 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg shadow-lg sm:bottom-5 sm:right-5 lg:hidden"
             >
               <List size={12} />
-              Bus List
+              {t.network.busList}
             </button>
           )}
 

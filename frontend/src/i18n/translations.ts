@@ -9,6 +9,15 @@ export interface Translation {
     methodology: string;
     guide: string;
   };
+  pin: {
+    title: string;
+    sub: string;
+    digitLabel: string;
+    textLabel: string;
+    errorMsg: string;
+    submitLabel: string;
+    submitLoading: string;
+  };
   common: {
     loading: string;
     error: string;
@@ -61,6 +70,7 @@ export interface Translation {
     id: string;
     networkLive: string;
     loadingParquet: string;
+    busList: string;
   };
   profiles: {
     label: string;
@@ -134,6 +144,15 @@ const ko: Translation = {
     methodology: '방법론',
     guide: '가이드',
   },
+  pin: {
+    title: '접근 제한',
+    sub: '액세스 코드를 입력하세요',
+    digitLabel: '숫자 4자리',
+    textLabel: '추가 코드 (문자)',
+    errorMsg: '액세스 코드가 올바르지 않습니다',
+    submitLabel: '확인',
+    submitLoading: '확인 중…',
+  },
   common: {
     loading: '불러오는 중',
     error: '오류',
@@ -193,6 +212,7 @@ const ko: Translation = {
     id: 'ID',
     networkLive: 'Network_Live',
     loadingParquet: 'parquet 로딩 …',
+    busList: '모선 목록',
   },
   profiles: {
     label: 'Temporal_Profiles',
@@ -286,6 +306,15 @@ const en: Translation = {
     methodology: 'Methodology',
     guide: 'Guide',
   },
+  pin: {
+    title: 'Private Preview',
+    sub: 'Enter the access code',
+    digitLabel: '4 digits',
+    textLabel: 'Additional code (text)',
+    errorMsg: 'Invalid access code',
+    submitLabel: 'Enter',
+    submitLoading: 'Verifying…',
+  },
   common: {
     loading: 'loading',
     error: 'error',
@@ -346,6 +375,7 @@ const en: Translation = {
     id: 'ID',
     networkLive: 'Network_Live',
     loadingParquet: 'loading parquet …',
+    busList: 'Bus List',
   },
   profiles: {
     label: 'Temporal_Profiles',
