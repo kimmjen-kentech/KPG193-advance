@@ -116,7 +116,7 @@ export const ProfilesPage = () => {
       </header>
 
       {/* Annual overview — 365일 일별 집계 (앞단에 배치하여 큰 패턴 먼저 보기) */}
-      <AnnualSection number="00" />
+      <AnnualSection number="00" onDayClick={setDay} />
 
       <section className="grid items-stretch gap-3 lg:grid-cols-[320px_1fr]">
         <div className="border border-border bg-bg-elev p-5">

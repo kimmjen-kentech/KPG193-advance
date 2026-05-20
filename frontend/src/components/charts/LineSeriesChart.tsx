@@ -32,6 +32,8 @@ interface LineSeriesChartProps {
   xTicks?: number[];
   showLegend?: boolean;
   vLine?: { x: number; label?: string };
+  cursorX?: number;
+  onChartClick?: (x: number) => void;
   'aria-label'?: string;
 }
 
@@ -47,8 +49,10 @@ export const LineSeriesChart = ({
   yMax,
   yMin = 0,
   xTicks,
+  onChartClick,
   showLegend = false,
   vLine,
+  cursorX,
   'aria-label': ariaLabel,
 }: LineSeriesChartProps) => {
   // 시리즈를 wide format으로 머지: [{x, series1: y1, series2: y2}, ...]
@@ -72,7 +76,20 @@ export const LineSeriesChart = ({
   return (
     <div className="h-full w-full" role="img" aria-label={ariaLabel}>
       <ResponsiveContainer width="100%" height={height}>
-        <ComposedChart data={data} margin={{ top: 10, right: 16, bottom: 8, left: 0 }}>
+        <ComposedChart
+          data={data}
+          margin={{ top: 10, right: 16, bottom: 8, left: 0 }}
+          onClick={
+            onChartClick
+              ? (state: unknown) => {
+                  const s = state as { activePayload?: Array<{ payload?: { x?: number } }> };
+                  const x = s?.activePayload?.[0]?.payload?.x;
+                  if (typeof x === 'number') onChartClick(x);
+                }
+              : undefined
+          }
+          style={onChartClick ? { cursor: 'pointer' } : undefined}
+        >
           <CartesianGrid stroke="var(--border)" strokeWidth={0.5} vertical={false} />
           <XAxis
             dataKey="x"
@@ -131,6 +148,14 @@ export const LineSeriesChart = ({
                     }
                   : undefined
               }
+            />
+          )}
+          {typeof cursorX === 'number' && (
+            <ReferenceLine
+              x={cursorX}
+              stroke="var(--accent)"
+              strokeWidth={1.5}
+              ifOverflow="visible"
             />
           )}
           {series.map((s) =>

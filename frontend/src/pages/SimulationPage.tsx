@@ -5,6 +5,8 @@ import { ModelingSection } from '../components/simulation/ModelingSection';
 import { AutoGridSection } from '../components/simulation/AutoGridSection';
 import { CoSimTypesSection } from '../components/simulation/CoSimTypesSection';
 import { ScenarioSection } from '../components/simulation/ScenarioSection';
+import { PlaybackControls } from '../components/simulation/PlaybackControls';
+import { usePlayback } from '../hooks/usePlayback';
 
 // Frequency response — 270 MW trip (1.5% of 17,600 MW), t=20s
 // ROCOF 0.18 Hz/s → nadir 59.64 Hz at t=22s → governor recovery to 59.98 Hz
@@ -190,6 +192,8 @@ const ArchDiagram = ({
 export const SimulationPage = () => {
   const { t } = useI18n();
   const s = t.simulation;
+  // 두 시계열 차트(freq + voltage)에 공통 적용되는 playback (0-60s)
+  const playback = usePlayback({ min: 0, max: 60, step: 0.5, intervalMs: 60 });
 
   return (
     <div className="space-y-20">
@@ -241,6 +245,18 @@ export const SimulationPage = () => {
       {/* Section 05: Scenario comparison (trip size sensitivity) */}
       <ScenarioSection number="05" />
 
+      {/* Playback controls — applies to Freq (06) + Voltage (07) charts together */}
+      <PlaybackControls
+        playing={playback.playing}
+        time={playback.time}
+        min={0}
+        max={60}
+        unit="s"
+        onToggle={playback.toggle}
+        onReset={playback.reset}
+        onSeek={playback.seek}
+      />
+
       {/* Section 06: Frequency Response (baseline scenario) */}
       <section className="space-y-6">
         <SectionHeader number="06" title={s.sections.freqResponse} />
@@ -274,6 +290,7 @@ export const SimulationPage = () => {
               xLabel={(x) => `${x}s`}
               yLabel={(y) => `${y.toFixed(2)}`}
               vLine={{ x: 20, label: 'Generator trip' }}
+              cursorX={playback.time > 0 ? playback.time : undefined}
               showLegend
             />
           </div>
@@ -311,6 +328,7 @@ export const SimulationPage = () => {
               xLabel={(x) => `${x}s`}
               yLabel={(y) => y.toFixed(2)}
               vLine={{ x: 20 }}
+              cursorX={playback.time > 0 ? playback.time : undefined}
               showLegend
             />
           </div>
