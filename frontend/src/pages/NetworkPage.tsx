@@ -21,7 +21,7 @@ import {
 import { toDisplay } from '../utils/decimal';
 import { useTheme } from '../hooks/useTheme';
 import { getFuelIconUrl, FUEL_ICON_SIZE, FUEL_ICON_SVG } from '../lib/fuelIcons';
-import { FUEL_COLORS_HEX } from '../lib/constants';
+import { FUEL_COLORS_HEX, FUEL_LABELS } from '../lib/constants';
 import { generateAllPieIcons, type PieIcon } from '../lib/pieIcon';
 import { cn } from '../lib/cn';
 import { useI18n } from '../hooks/useI18n';
@@ -528,6 +528,8 @@ export const NetworkPage = () => {
                     bus={bus}
                     branches={related}
                     busMap={busMap}
+                    thermalGens={generators.data?.filter((g) => g.bus_id === bus.id) ?? []}
+                    busGenMix={genMix.data?.find((g) => g.bus_id === bus.id) ?? null}
                     onClose={() => setSelection(null)}
                     onSelectBranch={(b) => setSelection({ kind: 'branch', branch: b })}
                     onSelectBus={(id) => setSelection({ kind: 'bus', id })}
@@ -566,10 +568,12 @@ export const NetworkPage = () => {
   );
 };
 
-const BusDetail = ({
+export const BusDetail = ({
   bus,
   branches,
   busMap,
+  thermalGens = [],
+  busGenMix = null,
   onClose,
   onSelectBranch,
   onSelectBus,
@@ -577,10 +581,26 @@ const BusDetail = ({
   bus: NetworkBus;
   branches: NetworkBranch[];
   busMap: Map<number, NetworkBus>;
+  thermalGens?: NetworkGenerator[];
+  busGenMix?: NetworkBusGenMix | null;
   onClose: () => void;
   onSelectBranch: (b: NetworkBranch) => void;
   onSelectBus: (id: number) => void;
-}) => (
+}) => {
+  const { t } = useI18n();
+  const ibrFuels = busGenMix
+    ? (
+        [
+          { key: 'solar' as const, mw: busGenMix.solar },
+          { key: 'wind' as const, mw: busGenMix.wind },
+          { key: 'hydro' as const, mw: busGenMix.hydro },
+        ] as const
+      ).filter((f) => f.mw > 0)
+    : [];
+
+  const hasGens = thermalGens.length > 0 || ibrFuels.length > 0;
+
+  return (
   <div className="space-y-6 p-5">
     <div className="flex items-start justify-between">
       <div>
@@ -668,8 +688,56 @@ const BusDetail = ({
         })}
       </div>
     </div>
+
+    {hasGens && (
+      <div>
+        <div className="mb-3 flex items-center justify-between">
+          <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg">
+            {t.network.generators}
+          </span>
+          <span className="bg-bg-subtle px-2 py-0.5 font-mono text-[9px] text-fg-muted">
+            {thermalGens.length + ibrFuels.length}
+          </span>
+        </div>
+        <div className="divide-y divide-border/40 border-t border-border">
+          {thermalGens.map((g, i) => (
+            <div key={i} className="flex items-center justify-between py-2">
+              <div className="flex items-center gap-2">
+                <span
+                  className="h-2 w-2 flex-shrink-0 rounded-full"
+                  style={{ backgroundColor: FUEL_COLORS_HEX[g.fuel] }}
+                />
+                <span className="font-mono text-[11px] text-fg">
+                  {FUEL_LABELS[g.fuel] ?? g.fuel}
+                </span>
+              </div>
+              <span className="font-mono text-[10px] tabular-nums text-fg-muted">
+                {toDisplay(g.pmax_exact, { grouping: true, suffix: ' MW' })}
+              </span>
+            </div>
+          ))}
+          {ibrFuels.map(({ key, mw }) => (
+            <div key={key} className="flex items-center justify-between py-2">
+              <div className="flex items-center gap-2">
+                <span
+                  className="h-2 w-2 flex-shrink-0 rounded-full"
+                  style={{ backgroundColor: FUEL_COLORS_HEX[key] }}
+                />
+                <span className="font-mono text-[11px] text-fg">
+                  {FUEL_LABELS[key] ?? key}
+                </span>
+              </div>
+              <span className="font-mono text-[10px] tabular-nums text-fg-muted">
+                {mw.toFixed(1)} MW
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
   </div>
-);
+  );
+};
 
 const BranchDetail = ({
   branch,
