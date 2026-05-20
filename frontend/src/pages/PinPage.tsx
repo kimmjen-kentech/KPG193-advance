@@ -5,7 +5,7 @@ import { cn } from '../lib/cn';
 import { useI18n } from '../hooks/useI18n';
 
 export const PinPage = () => {
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const [params] = useSearchParams();
   const nextPath = params.get('next') ?? '/';
 
@@ -85,14 +85,7 @@ export const PinPage = () => {
   };
 
   const filled = digits.every(Boolean) && text.trim().length > 0;
-  const title = locale === 'ko' ? '접근 제한' : 'Private Preview';
-  const sub = locale === 'ko' ? '액세스 코드를 입력하세요' : 'Enter the access code';
-  const digitLabel = locale === 'ko' ? '숫자 4자리' : '4 digits';
-  const textLabel = locale === 'ko' ? '추가 코드 (문자)' : 'Additional code (text)';
-  const errorMsg = locale === 'ko' ? '액세스 코드가 올바르지 않습니다' : 'Invalid access code';
-  const submitLabel = loading
-    ? locale === 'ko' ? '확인 중…' : 'Verifying…'
-    : locale === 'ko' ? '확인' : 'Enter';
+  const submitLabel = loading ? t.pin.submitLoading : t.pin.submitLabel;
 
   return (
     <div className="flex min-h-[100svh] items-center justify-center bg-bg p-4 text-fg">
@@ -105,15 +98,15 @@ export const PinPage = () => {
             KPG_193 · v1.5
           </div>
           <h1 className="mt-2 font-serif text-3xl italic leading-none tracking-tight text-fg">
-            {title}
+            {t.pin.title}
           </h1>
-          <p className="mt-2 font-serif text-sm italic text-fg-muted">{sub}</p>
+          <p className="mt-2 font-serif text-sm italic text-fg-muted">{t.pin.sub}</p>
         </div>
 
         <div className="space-y-5">
           <div>
             <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.2em] text-fg-subtle">
-              {digitLabel}
+              {t.pin.digitLabel}
             </p>
             <div
               className={cn(
@@ -145,7 +138,7 @@ export const PinPage = () => {
 
           <div>
             <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.2em] text-fg-subtle">
-              {textLabel}
+              {t.pin.textLabel}
             </p>
             <input
               ref={textRef}
@@ -168,7 +161,7 @@ export const PinPage = () => {
           </div>
 
           <div className="h-5 text-center">
-            {error && <p className="font-mono text-[11px] text-[#ef4444]">{errorMsg}</p>}
+            {error && <p className="font-mono text-[11px] text-[#ef4444]">{t.pin.errorMsg}</p>}
           </div>
 
           <button
@@ -196,8 +189,6 @@ export const PinPage = () => {
         }
       `}</style>
 
-      {/* Use t to silence unused-import warning (placeholder for future i18n keys) */}
-      <span className="hidden">{t.common.loading}</span>
     </div>
   );
 };
