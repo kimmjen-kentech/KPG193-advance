@@ -11,6 +11,7 @@ interface LineSeriesChartProps {
   xLabel?: (x: number) => string;
   yLabel?: (y: number) => string;
   yMax?: number;
+  yMin?: number;
 }
 
 export const LineSeriesChart = ({
@@ -20,6 +21,7 @@ export const LineSeriesChart = ({
   xLabel,
   yLabel,
   yMax: yMaxOverride,
+  yMin: yMinOverride,
 }: LineSeriesChartProps) => {
   const allPoints = series.flatMap((s) => s.points);
   if (allPoints.length === 0) return null;
@@ -33,7 +35,7 @@ export const LineSeriesChart = ({
   const xMin = Math.min(...xs);
   const xMax = Math.max(...xs);
   const yMax = yMaxOverride ?? Math.max(...ys, 0.01);
-  const yMin = 0;
+  const yMin = yMinOverride ?? 0;
 
   const sx = (x: number) =>
     padding.left + ((x - xMin) / Math.max(xMax - xMin, 1)) * innerW;
