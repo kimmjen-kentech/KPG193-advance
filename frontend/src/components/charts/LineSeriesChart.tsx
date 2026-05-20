@@ -3,6 +3,7 @@ interface Series {
   color: string;
   points: { x: number; y: number }[];
   fill?: boolean;
+  strokeDasharray?: string;
 }
 
 interface LineSeriesChartProps {
@@ -151,6 +152,7 @@ export const LineSeriesChart = ({
             strokeWidth="1.8"
             fill="none"
             strokeLinejoin="round"
+            strokeDasharray={s.strokeDasharray}
           />
         );
       })}

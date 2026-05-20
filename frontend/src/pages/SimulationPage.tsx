@@ -2,59 +2,59 @@ import { SectionHeader } from '../components/ui/SectionHeader';
 import { LineSeriesChart } from '../components/charts/LineSeriesChart';
 import { useI18n } from '../hooks/useI18n';
 
-// Frequency response data — 270 MW generator trip at t=20s
-// Based on KPG-193 SPEEDGOAT simulation results (nadir 59.64 Hz)
+// Frequency response — 270 MW trip (1.5% of 17,600 MW), t=20s
+// ROCOF 0.18 Hz/s → nadir 59.64 Hz at t=22s → governor recovery to 59.98 Hz
+// Based on KPG-193 SPEEDGOAT simulation (docs/cosimulation-research.md §8)
 const FREQ_POINTS = (() => {
   const pts: { x: number; y: number }[] = [];
-  for (let t = 0; t <= 60; t += 0.2) {
+  for (let t = 0; t <= 60; t += 0.1) {
     let f: number;
     if (t < 20) {
       f = 60.0;
     } else {
       const dt = t - 20;
-      // fast drop (ROCOF ≈ 0.18 Hz/s), then governor recovery
-      const drop = 0.36 * (1 - Math.exp(-dt / 1.8));
-      const recovery = 0.34 * (1 - Math.exp(-Math.max(dt - 2, 0) / 8));
-      f = 60.0 - drop + recovery;
+      if (dt <= 2) {
+        // Linear drop at ROCOF 0.18 Hz/s
+        f = 60.0 - 0.18 * dt;
+      } else {
+        // Governor response: τ=3.5 s, steady-state droop Δf=-0.02 Hz
+        f = 59.64 + 0.34 * (1 - Math.exp(-(dt - 2) / 3.5));
+      }
     }
     pts.push({ x: t, y: parseFloat(f.toFixed(4)) });
   }
   return pts;
 })();
 
-const VOLTAGE_POINTS_EMT = (() => {
-  const pts: { x: number; y: number }[] = [];
-  for (let t = 0; t <= 60; t += 0.5) {
-    let v: number;
+// Voltage response — 3 representative buses, EMT(solid) vs RMS(dashed)
+// Bus A: near trip (large dip), Bus B: mid, Bus C: far (small dip)
+// RMS-EMT co-simulation comparison (§8, Multi-core Co-simulation)
+type VoltagePts = { x: number; y: number }[];
+const mkVoltageBus = (
+  nadirEmt: number,
+  nadirRms: number,
+  tauS: number,
+): { emt: VoltagePts; rms: VoltagePts } => {
+  const emt: VoltagePts = [];
+  const rms: VoltagePts = [];
+  for (let t = 0; t <= 60; t += 0.2) {
     if (t < 20) {
-      v = 1.0;
+      emt.push({ x: t, y: 1.0 });
+      rms.push({ x: t, y: 1.0 });
     } else {
       const dt = t - 20;
-      const drop = 0.05 * (1 - Math.exp(-dt / 0.3));
-      const recovery = 0.04 * (1 - Math.exp(-Math.max(dt - 0.5, 0) / 3));
-      v = 1.0 - drop + recovery;
+      const emtV = nadirEmt + (1.0 - nadirEmt) * 0.97 * (1 - Math.exp(-dt / tauS));
+      const rmsV = nadirRms + (1.0 - nadirRms) * 0.95 * (1 - Math.exp(-dt / (tauS * 1.3)));
+      emt.push({ x: t, y: parseFloat(emtV.toFixed(4)) });
+      rms.push({ x: t, y: parseFloat(rmsV.toFixed(4)) });
     }
-    pts.push({ x: t, y: parseFloat(v.toFixed(4)) });
   }
-  return pts;
-})();
+  return { emt, rms };
+};
 
-const VOLTAGE_POINTS_RMS = (() => {
-  const pts: { x: number; y: number }[] = [];
-  for (let t = 0; t <= 60; t += 0.5) {
-    let v: number;
-    if (t < 20) {
-      v = 1.0;
-    } else {
-      const dt = t - 20;
-      const drop = 0.03 * (1 - Math.exp(-dt / 0.5));
-      const recovery = 0.025 * (1 - Math.exp(-Math.max(dt - 1, 0) / 5));
-      v = 1.0 - drop + recovery;
-    }
-    pts.push({ x: t, y: parseFloat(v.toFixed(4)) });
-  }
-  return pts;
-})();
+const BUS_A = mkVoltageBus(0.910, 0.920, 2.0); // near trip
+const BUS_B = mkVoltageBus(0.960, 0.964, 2.5); // mid-distance
+const BUS_C = mkVoltageBus(0.985, 0.987, 3.0); // far from trip
 
 const KPI_DATA = [
   { key: 'freqDrop', value: '59.64 Hz', unit: '' },
@@ -282,22 +282,18 @@ export const SimulationPage = () => {
           <div className="h-48 sm:h-60">
             <LineSeriesChart
               series={[
-                {
-                  name: 'EMT zone',
-                  color: 'var(--accent)',
-                  points: VOLTAGE_POINTS_EMT,
-                },
-                {
-                  name: 'RMS zone',
-                  color: 'var(--fg-muted)',
-                  points: VOLTAGE_POINTS_RMS,
-                },
+                { name: 'Bus A — EMT', color: '#3b82f6', points: BUS_A.emt },
+                { name: 'Bus A — RMS', color: '#3b82f6', strokeDasharray: '6 3', points: BUS_A.rms },
+                { name: 'Bus B — EMT', color: '#22c55e', points: BUS_B.emt },
+                { name: 'Bus B — RMS', color: '#22c55e', strokeDasharray: '6 3', points: BUS_B.rms },
+                { name: 'Bus C — EMT', color: '#f97316', points: BUS_C.emt },
+                { name: 'Bus C — RMS', color: '#f97316', strokeDasharray: '6 3', points: BUS_C.rms },
               ]}
-              yMin={0.94}
-              yMax={1.02}
+              yMin={0.88}
+              yMax={1.01}
               xTicks={[0, 10, 20, 30, 40, 50, 60]}
               xLabel={(x) => `${x}s`}
-              yLabel={(y) => y.toFixed(3)}
+              yLabel={(y) => y.toFixed(2)}
               vLine={{ x: 20 }}
               showLegend
             />

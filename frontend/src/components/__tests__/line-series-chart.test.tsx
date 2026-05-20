@@ -89,6 +89,20 @@ describe('LineSeriesChart', () => {
     expect(container.querySelector('svg')!.textContent).toContain('Trip');
   });
 
+  it('strokeDasharray가 있는 시리즈는 해당 패턴으로 path를 렌더한다', () => {
+    const { container } = render(
+      <LineSeriesChart
+        series={[
+          { name: 'solid', color: 'blue', points: twoPoint(0, 1.0, 10, 0.9) },
+          { name: 'dashed', color: 'blue', strokeDasharray: '6 3', points: twoPoint(0, 1.0, 10, 0.92) },
+        ]}
+      />,
+    );
+    const paths = [...container.querySelectorAll('path')];
+    const dashedPath = paths.find((p) => p.getAttribute('stroke-dasharray') === '6 3');
+    expect(dashedPath).toBeTruthy();
+  });
+
   it('fill=true 시리즈는 닫힌 path(area)와 선 path를 모두 렌더한다', () => {
     const { container } = render(
       <LineSeriesChart
