@@ -128,7 +128,9 @@ export const ProfilesPage = () => {
               </button>
             )}
           </div>
+          <label htmlFor="bus-select" className="sr-only">{t.profiles.scope}</label>
           <select
+            id="bus-select"
             value={busId ?? ''}
             onChange={(e) => setBusId(e.target.value === '' ? null : parseInt(e.target.value))}
             className="mt-4 w-full border border-border bg-bg p-2 font-mono text-xs text-fg"
@@ -159,36 +161,42 @@ export const ProfilesPage = () => {
           </div>
           <div className="flex flex-wrap justify-end gap-1 sm:gap-1.5">
             <button
+              aria-label="Go to first day"
               onClick={() => setDay(1)}
               className="hidden sm:inline-flex border border-border bg-bg px-2.5 py-1 font-mono text-[10px] text-fg-muted transition-colors hover:bg-fg hover:text-bg"
             >
               ◀◀
             </button>
             <button
+              aria-label="Go back 7 days"
               onClick={() => setDay(Math.max(1, day - 7))}
               className="border border-border bg-bg px-2 py-1 font-mono text-[10px] text-fg-muted transition-colors hover:bg-fg hover:text-bg sm:px-2.5"
             >
               −7
             </button>
             <button
+              aria-label="Go back 1 day"
               onClick={() => setDay(Math.max(1, day - 1))}
               className="border border-border bg-bg px-2 py-1 font-mono text-[10px] text-fg-muted transition-colors hover:bg-fg hover:text-bg sm:px-2.5"
             >
               −1
             </button>
             <button
+              aria-label="Go forward 1 day"
               onClick={() => setDay(Math.min(365, day + 1))}
               className="border border-border bg-bg px-2 py-1 font-mono text-[10px] text-fg-muted transition-colors hover:bg-fg hover:text-bg sm:px-2.5"
             >
               +1
             </button>
             <button
+              aria-label="Go forward 7 days"
               onClick={() => setDay(Math.min(365, day + 7))}
               className="border border-border bg-bg px-2 py-1 font-mono text-[10px] text-fg-muted transition-colors hover:bg-fg hover:text-bg sm:px-2.5"
             >
               +7
             </button>
             <button
+              aria-label="Go to last day"
               onClick={() => setDay(365)}
               className="hidden sm:inline-flex border border-border bg-bg px-2.5 py-1 font-mono text-[10px] text-fg-muted transition-colors hover:bg-fg hover:text-bg"
             >

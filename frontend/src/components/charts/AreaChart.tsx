@@ -12,6 +12,7 @@ interface AreaChartProps {
   xLabel?: (x: number) => string;
   yLabel?: (y: number) => string;
   highlightX?: number | null;
+  'aria-label'?: string;
 }
 
 export const AreaChart = ({
@@ -23,6 +24,7 @@ export const AreaChart = ({
   xLabel,
   yLabel,
   highlightX = null,
+  'aria-label': ariaLabel,
 }: AreaChartProps) => {
   if (data.length === 0) return null;
 
@@ -53,7 +55,7 @@ export const AreaChart = ({
   );
 
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="h-full w-full">
+    <svg viewBox={`0 0 ${width} ${height}`} className="h-full w-full" role="img" aria-label={ariaLabel}>
       {yTickValues.map((v, i) => (
         <g key={i}>
           <line

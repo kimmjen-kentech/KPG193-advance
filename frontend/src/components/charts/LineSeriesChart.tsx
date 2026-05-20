@@ -11,6 +11,7 @@ interface LineSeriesChartProps {
   xLabel?: (x: number) => string;
   yLabel?: (y: number) => string;
   yMax?: number;
+  'aria-label'?: string;
 }
 
 export const LineSeriesChart = ({
@@ -20,6 +21,7 @@ export const LineSeriesChart = ({
   xLabel,
   yLabel,
   yMax: yMaxOverride,
+  'aria-label': ariaLabel,
 }: LineSeriesChartProps) => {
   const allPoints = series.flatMap((s) => s.points);
   if (allPoints.length === 0) return null;
@@ -46,7 +48,7 @@ export const LineSeriesChart = ({
   );
 
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="h-full w-full">
+    <svg viewBox={`0 0 ${width} ${height}`} className="h-full w-full" role="img" aria-label={ariaLabel}>
       {yTickValues.map((v, i) => (
         <g key={i}>
           <line

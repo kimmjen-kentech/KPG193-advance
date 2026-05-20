@@ -17,7 +17,7 @@ export const Footer = () => {
           </p>
           <p className="font-mono text-[11px] text-fg-muted">
             arXiv:2411.14756 · {t.footer.fullCitation}{' '}
-            <Link to="/methodology" className="inline-flex items-baseline gap-0.5 text-fg underline-offset-4 hover:underline">
+            <Link to="/methodology" aria-label="View full citation on methodology page" className="inline-flex items-baseline gap-0.5 text-fg underline-offset-4 hover:underline">
               ↗
             </Link>
           </p>
