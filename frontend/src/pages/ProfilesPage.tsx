@@ -36,7 +36,7 @@ export const ProfilesPage = () => {
   const busList = useQuery<BusListRow>(busListSQL);
   const demand = useQuery<ProfileDemandRow>(profileDemandSQL(day, busId));
   const renewables = useQuery<ProfileRenewablesRow>(profileRenewablesSQL(day, busId));
-  const commitment = useQuery<CommitmentByFuelRow>(commitmentByFuelSQL(day));
+  const commitment = useQuery<CommitmentByFuelRow>(commitmentByFuelSQL(day, busId));
 
   const selectedBus = useMemo(
     () => busList.data?.find((b) => b.id === busId) ?? null,
@@ -284,7 +284,7 @@ export const ProfilesPage = () => {
 
       <ChartCard
         number="03"
-        title={`${t.profiles.thermalCommit}${busId !== null ? t.profiles.thermalCommitSystem : ''}`}
+        title={`${t.profiles.thermalCommit}${busId === null ? t.profiles.thermalCommitSystem : ''}`}
         icon={Flame}
         right={
           <LegendInline
