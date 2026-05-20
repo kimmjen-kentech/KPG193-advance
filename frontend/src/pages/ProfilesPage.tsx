@@ -244,6 +244,7 @@ export const ProfilesPage = () => {
       >
         <div className="h-64 w-full">
           {demand.loading && <ChartPending />}
+          {demand.error && <QueryError message={demand.error.message} />}
           {demand.data && (
             <AreaChart
               data={demandPoints}
@@ -271,6 +272,7 @@ export const ProfilesPage = () => {
       >
         <div className="h-64 w-full">
           {renewables.loading && <ChartPending />}
+          {renewables.error && <QueryError message={renewables.error.message} />}
           {renewables.data && (
             <LineSeriesChart
               series={renewableSeries}
@@ -298,6 +300,7 @@ export const ProfilesPage = () => {
       >
         <div className="h-64 w-full">
           {commitment.loading && <ChartPending />}
+          {commitment.error && <QueryError message={commitment.error.message} />}
           {commitment.data && commitment.data.length > 0 && (
             <LineSeriesChart
               series={commitmentSeries}
@@ -367,5 +370,11 @@ const LegendInline = ({ items }: { items: [string, string][] }) => (
 const ChartPending = () => (
   <div className="flex h-full flex-col gap-2 py-3">
     <Skeleton className="h-full w-full" />
+  </div>
+);
+
+const QueryError = ({ message }: { message: string }) => (
+  <div className="flex h-full items-center justify-center font-mono text-[11px] text-[#ef4444]">
+    {message}
   </div>
 );
