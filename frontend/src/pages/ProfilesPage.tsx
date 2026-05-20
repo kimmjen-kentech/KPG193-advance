@@ -295,6 +295,7 @@ export const ProfilesPage = () => {
           {renewables.data && (
             <LineSeriesChart
               series={renewableSeries}
+              xTicks={[1, 4, 8, 12, 16, 20, 24]}
               xLabel={(x) => `${x}h`}
               yLabel={(y) => y.toFixed(2)}
               yMax={1}
@@ -323,6 +324,7 @@ export const ProfilesPage = () => {
           {commitment.data && commitment.data.length > 0 && (
             <LineSeriesChart
               series={commitmentSeries}
+              xTicks={[1, 4, 8, 12, 16, 20, 24]}
               xLabel={(x) => `${x}h`}
               yLabel={(y) => `${(y / 1000).toFixed(1)}k`}
             />
@@ -355,6 +357,7 @@ export const ProfilesPage = () => {
             {weather.data && weather.data.length > 0 && (
               <LineSeriesChart
                 series={weatherSeries.temp}
+                xTicks={[1, 4, 8, 12, 16, 20, 24]}
                 xLabel={(x) => `${x}h`}
                 yLabel={(y) => `${y.toFixed(1)}°C`}
               />
@@ -369,6 +372,7 @@ export const ProfilesPage = () => {
             {weather.data && weather.data.length > 0 && (
               <LineSeriesChart
                 series={weatherSeries.wind}
+                xTicks={[1, 4, 8, 12, 16, 20, 24]}
                 xLabel={(x) => `${x}h`}
                 yLabel={(y) => `${y.toFixed(1)} m/s`}
               />
