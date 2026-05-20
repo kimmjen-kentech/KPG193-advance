@@ -11,13 +11,7 @@ describe('LineSeriesChart', () => {
   it('작은 y 범위(0.08 pu)에서 데이터가 차트 전체 높이를 사용한다', () => {
     const { container } = render(
       <LineSeriesChart
-        series={[
-          {
-            name: 'EMT',
-            color: 'blue',
-            points: twoPoint(0, 1.0, 60, 0.95),
-          },
-        ]}
+        series={[{ name: 'EMT', color: 'blue', points: twoPoint(0, 1.0, 60, 0.95) }]}
         yMin={0.94}
         yMax={1.02}
         width={800}
@@ -26,12 +20,7 @@ describe('LineSeriesChart', () => {
     );
     const path = container.querySelector('path')!;
     const d = path.getAttribute('d')!;
-    // M x,y L x,y 형태에서 y 좌표 추출
-    const yCoords = [...d.matchAll(/[ML]([\d.]+),([\d.]+)/g)].map((m) =>
-      parseFloat(m[2]),
-    );
-    // y=1.0 → 데이터의 75% 위치, y=0.95 → 12.5% 위치 → 두 점 차이가 innerH의 62.5%
-    // innerH = 240 - 16 - 24 = 200, 62.5% = 125px
+    const yCoords = [...d.matchAll(/[ML]([\d.]+),([\d.]+)/g)].map((m) => parseFloat(m[2]));
     expect(Math.abs(yCoords[0] - yCoords[1])).toBeGreaterThan(100);
   });
 
@@ -42,11 +31,7 @@ describe('LineSeriesChart', () => {
           {
             name: 'f',
             color: 'red',
-            points: [
-              { x: 0, y: 60 },
-              { x: 20, y: 59.64 },
-              { x: 60, y: 59.98 },
-            ],
+            points: [{ x: 0, y: 60 }, { x: 20, y: 59.64 }, { x: 60, y: 59.98 }],
           },
         ]}
         xTicks={[0, 20, 40, 60]}
@@ -57,7 +42,6 @@ describe('LineSeriesChart', () => {
     expect(getByText('20s')).toBeInTheDocument();
     expect(getByText('40s')).toBeInTheDocument();
     expect(getByText('60s')).toBeInTheDocument();
-    // 데이터에 없는 값이 기본 샘플링으로 나오면 안 됨
     expect(queryByText('7.6s')).not.toBeInTheDocument();
   });
 
@@ -72,7 +56,49 @@ describe('LineSeriesChart', () => {
         xLabel={(x) => `${x}s`}
       />,
     );
-    // 0s는 정확히 1번만 렌더돼야 함 (중복 없음)
     expect(getAllByText('0s')).toHaveLength(1);
+  });
+
+  it('showLegend=true이면 시리즈 이름이 SVG 안에 렌더된다', () => {
+    const { getByText } = render(
+      <LineSeriesChart
+        series={[
+          { name: 'EMT zone', color: 'blue', points: twoPoint(0, 1.0, 60, 0.95) },
+          { name: 'RMS zone', color: 'gray', points: twoPoint(0, 1.0, 60, 0.97) },
+        ]}
+        showLegend
+      />,
+    );
+    expect(getByText('EMT zone')).toBeInTheDocument();
+    expect(getByText('RMS zone')).toBeInTheDocument();
+  });
+
+  it('vLine이 있으면 해당 x 위치에 line 엘리먼트가 렌더된다', () => {
+    const { container } = render(
+      <LineSeriesChart
+        series={[{ name: 'f', color: 'red', points: twoPoint(0, 60, 60, 59.64) }]}
+        vLine={{ x: 20, label: 'Trip' }}
+      />,
+    );
+    // SVG에 dashed line 존재
+    const dashedLines = [...container.querySelectorAll('line')].filter(
+      (l) => l.getAttribute('stroke-dasharray'),
+    );
+    expect(dashedLines.length).toBeGreaterThan(0);
+    // 레이블도 렌더
+    expect(container.querySelector('svg')!.textContent).toContain('Trip');
+  });
+
+  it('fill=true 시리즈는 닫힌 path(area)와 선 path를 모두 렌더한다', () => {
+    const { container } = render(
+      <LineSeriesChart
+        series={[{ name: 'solar', color: 'orange', fill: true, points: twoPoint(0, 0, 12, 0.8) }]}
+      />,
+    );
+    const paths = container.querySelectorAll('path');
+    // fill path + line path = 2
+    expect(paths.length).toBeGreaterThanOrEqual(2);
+    const fillPath = [...paths].find((p) => p.getAttribute('fill') !== 'none');
+    expect(fillPath).toBeTruthy();
   });
 });

@@ -244,10 +244,11 @@ export const SimulationPage = () => {
                   name: 'Frequency',
                   color: 'var(--accent)',
                   points: FREQ_POINTS,
+                  fill: true,
                 },
                 {
-                  name: 'Nominal',
-                  color: 'var(--border)',
+                  name: 'Nominal 60 Hz',
+                  color: 'var(--fg-subtle)',
                   points: [{ x: 0, y: 60 }, { x: 60, y: 60 }],
                 },
               ]}
@@ -256,6 +257,8 @@ export const SimulationPage = () => {
               xTicks={[0, 10, 20, 30, 40, 50, 60]}
               xLabel={(x) => `${x}s`}
               yLabel={(y) => `${y.toFixed(2)}`}
+              vLine={{ x: 20, label: 'Generator trip' }}
+              showLegend
             />
           </div>
           <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.15em] text-fg-subtle">
@@ -295,6 +298,8 @@ export const SimulationPage = () => {
               xTicks={[0, 10, 20, 30, 40, 50, 60]}
               xLabel={(x) => `${x}s`}
               yLabel={(y) => y.toFixed(3)}
+              vLine={{ x: 20 }}
+              showLegend
             />
           </div>
           <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.15em] text-fg-subtle">

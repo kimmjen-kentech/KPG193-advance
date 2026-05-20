@@ -62,16 +62,19 @@ export const ProfilesPage = () => {
       {
         name: 'solar',
         color: FUEL_COLORS_HEX.solar,
+        fill: true,
         points: renewables.data.map((d) => ({ x: d.hour, y: d.solar })),
       },
       {
         name: 'wind',
         color: FUEL_COLORS_HEX.wind,
+        fill: true,
         points: renewables.data.map((d) => ({ x: d.hour, y: d.wind })),
       },
       {
         name: 'hydro',
         color: FUEL_COLORS_HEX.hydro,
+        fill: true,
         points: renewables.data.map((d) => ({ x: d.hour, y: d.hydro })),
       },
     ];
