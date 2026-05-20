@@ -131,6 +131,7 @@ export interface Translation {
     sections: {
       comparison: string;
       freqResponse: string;
+      voltageResponse: string;
       architecture: string;
       results: string;
     };
@@ -153,6 +154,11 @@ export interface Translation {
     eventLabel: string;
     archTitle: string;
     archCaption: string;
+    archRmsLabel: string;
+    archEmtDesc: string;
+    archIbrZone: string;
+    voltageChartTitle: string;
+    voltageChartCaption: string;
     kpi: {
       activePowerError: string;
       reactivePowerError: string;
@@ -323,6 +329,7 @@ const ko: Translation = {
     sections: {
       comparison: 'EMT vs RMS',
       freqResponse: '주파수 응답',
+      voltageResponse: '전압 응답',
       architecture: 'Co-simulation 구조',
       results: '검증 결과',
     },
@@ -345,6 +352,11 @@ const ko: Translation = {
     eventLabel: 't=20s 발전원 탈락',
     archTitle: 'RMS-EMT Multi-core Co-simulation',
     archCaption: 'KPG-193을 서브 네트워크로 분할. Core 1(RMS, 2,000 μs)이 광역망을, Core 2(EMT, 50 μs)가 상세 해석 영역을 담당. 경계면에서 ITM 인터페이스로 실시간 데이터 교환.',
+    archRmsLabel: 'KPG-193 광역망 (대부분)',
+    archEmtDesc: '상세 해석 서브 계통',
+    archIbrZone: 'IBR / 전력전자 집중 구역',
+    voltageChartTitle: '발전기 탈락 시나리오 — 전압 응답',
+    voltageChartCaption: 'EMT 구역(Core 2)은 스위칭 과도현상으로 초기 전압 강하 폭이 크고, RMS 구역(Core 1)은 페이저 근사로 완만하게 반응.',
     kpi: {
       activePowerError: '유효전력 오차',
       reactivePowerError: '무효전력 오차',
@@ -522,6 +534,7 @@ const en: Translation = {
     sections: {
       comparison: 'EMT vs RMS',
       freqResponse: 'Frequency Response',
+      voltageResponse: 'Voltage Response',
       architecture: 'Co-simulation Architecture',
       results: 'Validation Results',
     },
@@ -544,6 +557,11 @@ const en: Translation = {
     eventLabel: 't=20s generator trip',
     archTitle: 'RMS-EMT Multi-core Co-simulation',
     archCaption: 'KPG-193 partitioned into sub-networks. Core 1 (RMS, 2,000 μs) covers the wide-area grid; Core 2 (EMT, 50 μs) handles the detailed subsystem. Boundary data exchanged in real-time via ITM interface.',
+    archRmsLabel: 'KPG-193 bulk network (most buses)',
+    archEmtDesc: 'Detailed EMT sub-network',
+    archIbrZone: 'IBR / power electronics zone',
+    voltageChartTitle: 'Generator Trip Scenario — Voltage Response',
+    voltageChartCaption: 'EMT zone (Core 2) exhibits sharper initial voltage dip due to switching transients; RMS zone (Core 1) responds gradually via phasor approximation.',
     kpi: {
       activePowerError: 'Active Power Error',
       reactivePowerError: 'Reactive Power Error',

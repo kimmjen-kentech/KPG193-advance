@@ -22,6 +22,40 @@ const FREQ_POINTS = (() => {
   return pts;
 })();
 
+const VOLTAGE_POINTS_EMT = (() => {
+  const pts: { x: number; y: number }[] = [];
+  for (let t = 0; t <= 60; t += 0.5) {
+    let v: number;
+    if (t < 20) {
+      v = 1.0;
+    } else {
+      const dt = t - 20;
+      const drop = 0.05 * (1 - Math.exp(-dt / 0.3));
+      const recovery = 0.04 * (1 - Math.exp(-Math.max(dt - 0.5, 0) / 3));
+      v = 1.0 - drop + recovery;
+    }
+    pts.push({ x: t, y: parseFloat(v.toFixed(4)) });
+  }
+  return pts;
+})();
+
+const VOLTAGE_POINTS_RMS = (() => {
+  const pts: { x: number; y: number }[] = [];
+  for (let t = 0; t <= 60; t += 0.5) {
+    let v: number;
+    if (t < 20) {
+      v = 1.0;
+    } else {
+      const dt = t - 20;
+      const drop = 0.03 * (1 - Math.exp(-dt / 0.5));
+      const recovery = 0.025 * (1 - Math.exp(-Math.max(dt - 1, 0) / 5));
+      v = 1.0 - drop + recovery;
+    }
+    pts.push({ x: t, y: parseFloat(v.toFixed(4)) });
+  }
+  return pts;
+})();
+
 const KPI_DATA = [
   { key: 'freqDrop', value: '59.64 Hz', unit: '' },
   { key: 'recovery', value: '< 10 s', unit: '' },
@@ -71,7 +105,17 @@ const CompareCard = ({
   </div>
 );
 
-const ArchDiagram = ({ caption }: { caption: string }) => (
+const ArchDiagram = ({
+  caption,
+  rmsLabel,
+  emtDesc,
+  ibrZone,
+}: {
+  caption: string;
+  rmsLabel: string;
+  emtDesc: string;
+  ibrZone: string;
+}) => (
   <div className="border border-border bg-bg-elev p-6">
     <svg viewBox="0 0 640 240" className="w-full" aria-label="Co-simulation architecture">
       {/* Core 1 RMS */}
@@ -84,7 +128,7 @@ const ArchDiagram = ({ caption }: { caption: string }) => (
         2,000 μs time-step
       </text>
       <text x="140" y="116" textAnchor="middle" fontFamily="monospace" fontSize="9" fill="var(--fg-subtle)">
-        KPG-193 광역망 (대부분)
+        {rmsLabel}
       </text>
       <text x="140" y="132" textAnchor="middle" fontFamily="monospace" fontSize="9" fill="var(--fg-subtle)">
         PSS/E-type phasor solver
@@ -114,13 +158,13 @@ const ArchDiagram = ({ caption }: { caption: string }) => (
         50 μs time-step
       </text>
       <text x="500" y="116" textAnchor="middle" fontFamily="monospace" fontSize="9" fill="var(--fg-subtle)">
-        상세 해석 서브 계통
+        {emtDesc}
       </text>
       <text x="500" y="132" textAnchor="middle" fontFamily="monospace" fontSize="9" fill="var(--fg-subtle)">
         Instantaneous waveform
       </text>
       <text x="500" y="156" textAnchor="middle" fontFamily="monospace" fontSize="8" fill="var(--accent)">
-        IBR / 전력전자 집중 구역
+        {ibrZone}
       </text>
 
       {/* SPEEDGOAT label */}
@@ -219,20 +263,63 @@ export const SimulationPage = () => {
         </div>
       </section>
 
-      {/* Section 03: Architecture */}
+      {/* Voltage Response (sub-section within Section 02 scope) */}
       <section className="space-y-6">
-        <SectionHeader number="03" title={s.sections.architecture} />
+        <SectionHeader number="03" title={s.sections.voltageResponse} />
+        <div className="border border-border bg-bg-elev p-4 sm:p-6">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg">
+              {s.voltageChartTitle}
+            </span>
+            <span className="border border-border bg-bg px-2 py-1 font-mono text-[9px] uppercase tracking-[0.15em] text-fg-subtle">
+              {s.eventLabel}
+            </span>
+          </div>
+          <div className="h-48 sm:h-60">
+            <LineSeriesChart
+              series={[
+                {
+                  name: 'EMT zone',
+                  color: 'var(--accent)',
+                  points: VOLTAGE_POINTS_EMT,
+                },
+                {
+                  name: 'RMS zone',
+                  color: 'var(--fg-muted)',
+                  points: VOLTAGE_POINTS_RMS,
+                },
+              ]}
+              yMin={0.94}
+              yMax={1.02}
+              xLabel={(x) => `${x}s`}
+              yLabel={(y) => y.toFixed(3)}
+            />
+          </div>
+          <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.15em] text-fg-subtle">
+            {s.voltageChartCaption}
+          </p>
+        </div>
+      </section>
+
+      {/* Section 04: Architecture */}
+      <section className="space-y-6">
+        <SectionHeader number="04" title={s.sections.architecture} />
         <div className="space-y-3">
           <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg">
             {s.archTitle}
           </p>
-          <ArchDiagram caption={s.archCaption} />
+          <ArchDiagram
+            caption={s.archCaption}
+            rmsLabel={s.archRmsLabel}
+            emtDesc={s.archEmtDesc}
+            ibrZone={s.archIbrZone}
+          />
         </div>
       </section>
 
-      {/* Section 04: Results */}
+      {/* Section 05: Results */}
       <section className="space-y-6">
-        <SectionHeader number="04" title={s.sections.results} />
+        <SectionHeader number="05" title={s.sections.results} />
         <div className="grid grid-cols-2 gap-px border border-border bg-border sm:grid-cols-3 lg:grid-cols-6">
           {KPI_DATA.map(({ key, value, unit }) => (
             <div key={key} className="bg-bg-elev p-4">
