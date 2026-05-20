@@ -11,13 +11,11 @@ const renderSim = () =>
   );
 
 describe('SimulationPage', () => {
-  it('5개 섹션 헤더가 표시된다', () => {
+  it('8개 섹션 헤더가 표시된다', () => {
     renderSim();
-    expect(screen.getByText('01')).toBeInTheDocument();
-    expect(screen.getByText('02')).toBeInTheDocument();
-    expect(screen.getByText('03')).toBeInTheDocument();
-    expect(screen.getByText('04')).toBeInTheDocument();
-    expect(screen.getByText('05')).toBeInTheDocument();
+    ['01', '02', '03', '04', '05', '06', '07', '08'].forEach((n) => {
+      expect(screen.getByText(n)).toBeInTheDocument();
+    });
   });
 
   it('EMT와 RMS 비교 카드가 표시된다', () => {
@@ -42,9 +40,23 @@ describe('SimulationPage', () => {
     expect(screen.getAllByText(/voltage response/i).length).toBeGreaterThan(0);
   });
 
-  it('Co-simulation 파티션 설명이 표시된다', () => {
+  it('Co-simulation 파티션 설명이 표시된다 (3종 카드)', () => {
     renderSim();
-    expect(screen.getByText(/partition/i)).toBeInTheDocument();
+    // CoSimTypesSection이 3개 카드에 각각 'Partition' 라벨 노출 → 다수 존재가 정상
+    expect(screen.getAllByText(/partition/i).length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('새 섹션: Modeling / AutoGrid / Co-simulation Types 모두 렌더', () => {
+    renderSim();
+    // Generator card title via i18n (en locale default in jsdom)
+    expect(screen.getByText(/synchronous generator/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/IBR/i).length).toBeGreaterThan(0);
+    // AutoGrid pipeline
+    expect(screen.getAllByText(/AutoGrid/i).length).toBeGreaterThan(0);
+    // Co-sim 3 types
+    expect(screen.getByText('EMT-EMT')).toBeInTheDocument();
+    expect(screen.getByText('RMS-RMS')).toBeInTheDocument();
+    expect(screen.getAllByText('RMS-EMT').length).toBeGreaterThan(0);
   });
 
   it('KPI 그리드에 6개 항목이 있다', () => {

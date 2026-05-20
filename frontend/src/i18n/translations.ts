@@ -144,10 +144,73 @@ export interface Translation {
     tagline: string;
     sections: {
       comparison: string;
+      modeling: string;
+      autoGrid: string;
+      coSimTypes: string;
       freqResponse: string;
       voltageResponse: string;
       architecture: string;
       results: string;
+    };
+    modeling: {
+      intro: string;
+      generator: {
+        title: string;
+        desc: string;
+        avr: string;
+        avrDesc: string;
+        governor: string;
+        governorDesc: string;
+        pss: string;
+        pssDesc: string;
+      };
+      ibr: {
+        title: string;
+        desc: string;
+        mode: string;
+        modeDesc: string;
+        note: string;
+      };
+    };
+    autoGrid: {
+      title: string;
+      desc: string;
+      inputLabel: string;
+      inputDesc: string;
+      processLabel: string;
+      processDesc: string;
+      outputLabel: string;
+      outputDesc: string;
+      humanError: string;
+      vpError: string;
+      timeSaved: string;
+      timeSavedValue: string;
+    };
+    coSimTypes: {
+      intro: string;
+      itm: string;
+      emtEmt: {
+        name: string;
+        partition: string;
+        interface: string;
+        case: string;
+      };
+      rmsRms: {
+        name: string;
+        partition: string;
+        interface: string;
+        case: string;
+      };
+      rmsEmt: {
+        name: string;
+        partition: string;
+        interface: string;
+        case: string;
+        thisWork: string;
+      };
+      partitionLabel: string;
+      interfaceLabel: string;
+      caseLabel: string;
     };
     emt: {
       title: string;
@@ -356,10 +419,73 @@ const ko: Translation = {
     tagline: 'KPG-193 전국전력망을 멀티코어 실시간 시뮬레이터(SPEEDGOAT)에서 구동하기 위한 EMT·RMS 혼합 Co-simulation 구현 및 검증.',
     sections: {
       comparison: 'EMT vs RMS',
+      modeling: '계통 모델링',
+      autoGrid: 'AutoGrid 자동 생성',
+      coSimTypes: 'Co-simulation 3종',
       freqResponse: '주파수 응답',
       voltageResponse: '전압 응답',
       architecture: 'Co-simulation 구조',
       results: '검증 결과',
+    },
+    modeling: {
+      intro: '실제 장비를 Simulink의 수식 모델로 표현. EMT는 자세한 내부 자기장까지, RMS는 표준 GENROU 등 핵심 거동만.',
+      generator: {
+        title: '동기 발전기',
+        desc: '화력·원자력·수력 발전소의 회전 기계. 자석이 회전하며 전기를 발생.',
+        avr: 'AVR',
+        avrDesc: '자동전압조정기 — 발전기 출력 전압이 흔들리면 자동 보정',
+        governor: 'Governor',
+        governorDesc: '발전기 회전 속도(주파수) 변동 시 연료 공급량 조절',
+        pss: 'PSS',
+        pssDesc: '계통 전체 진동 발생 시 발전기 출력으로 댐핑 보조',
+      },
+      ibr: {
+        title: 'IBR (인버터 기반 자원)',
+        desc: '태양광·풍력·배터리. 인버터를 통해 전기를 만들고 물리적 회전 관성 없음.',
+        mode: 'Grid-Following',
+        modeDesc: '계통 주파수·전압을 감지(PLL)하여 그에 맞춰 출력. 발전(+)·부하(-) 양방향 가능',
+        note: '재생에너지 비중이 늘수록 IBR 정확 모델링이 핵심.',
+      },
+    },
+    autoGrid: {
+      title: 'MATPOWER → Simulink 자동 생성',
+      desc: '193 모선·407 선로를 손으로 배치·연결하면 며칠 + 실수 다수. MATPOWER 표준 파일을 입력하면 모선 위치·타입(Slack/PV/PQ)·송전선 자동 배선.',
+      inputLabel: 'Input',
+      inputDesc: 'MATPOWER .m / .mat',
+      processLabel: 'AutoGrid',
+      processDesc: 'Parser · Topology Builder · Block Placer',
+      outputLabel: 'Output',
+      outputDesc: 'Simulink Model (EMT / RMS)',
+      humanError: 'Human Error',
+      vpError: 'V/P 오차',
+      timeSaved: '작업 시간',
+      timeSavedValue: '일 → 분',
+    },
+    coSimTypes: {
+      intro: '경계면에서 ITM (Ideal Transformer Model) 인터페이스로 데이터 교환. 양쪽 영역의 해석 방식에 따라 3가지 조합.',
+      itm: 'ITM 인터페이스 — 한쪽이 전압(전위차) 전달 / 다른 쪽이 전류(흐름) 회신',
+      emtEmt: {
+        name: 'EMT-EMT',
+        partition: '양쪽 모두 EMT',
+        interface: '순시 파형 (V, I) 직접 교환 — 번역 불필요',
+        case: '33-bus / 2-core 검증 — 단일 계통 결과와 모든 모선 전압 일치',
+      },
+      rmsRms: {
+        name: 'RMS-RMS',
+        partition: '양쪽 모두 RMS',
+        interface: '페이저 (|V|∠θ, |I|∠θ) 교환 — 번역 불필요',
+        case: 'IEEE 15-bus / 3-core 검증 — 전압·위상·조류 모두 일치',
+      },
+      rmsEmt: {
+        name: 'RMS-EMT',
+        partition: '혼합 (이 연구)',
+        interface: 'EMT→RMS는 푸리에 변환, RMS→EMT는 파형 합성',
+        case: 'IEEE 18-bus / 2-core 검증 → KPG-193 적용',
+        thisWork: 'This Work',
+      },
+      partitionLabel: 'Partition',
+      interfaceLabel: 'Interface',
+      caseLabel: 'Validation',
     },
     emt: {
       title: 'EMT',
@@ -575,10 +701,73 @@ const en: Translation = {
     tagline: 'Multi-core real-time co-simulation of the KPG-193 national grid on SPEEDGOAT, combining EMT and RMS solvers across distributed cores.',
     sections: {
       comparison: 'EMT vs RMS',
+      modeling: 'Grid Modeling',
+      autoGrid: 'AutoGrid Pipeline',
+      coSimTypes: 'Co-simulation Types',
       freqResponse: 'Frequency Response',
       voltageResponse: 'Voltage Response',
       architecture: 'Co-simulation Architecture',
       results: 'Validation Results',
+    },
+    modeling: {
+      intro: 'Physical devices represented as Simulink equations. EMT models internal magnetic fields in detail; RMS uses standard reduced models (e.g., GENROU).',
+      generator: {
+        title: 'Synchronous Generator',
+        desc: 'Rotating mass found in thermal, nuclear, and hydro plants. Magnets spin to generate electricity.',
+        avr: 'AVR',
+        avrDesc: 'Automatic Voltage Regulator — corrects output voltage deviations',
+        governor: 'Governor',
+        governorDesc: 'Adjusts fuel input when rotor speed (frequency) drifts',
+        pss: 'PSS',
+        pssDesc: 'Power System Stabilizer — damps inter-area oscillations via generator output',
+      },
+      ibr: {
+        title: 'IBR (Inverter-Based Resources)',
+        desc: 'Solar PV, wind, batteries. Power produced via inverters with no physical rotational inertia.',
+        mode: 'Grid-Following',
+        modeDesc: 'Senses grid frequency/voltage (PLL) and tracks setpoints. Bidirectional (generation + consumption)',
+        note: 'Accurate IBR modeling is critical as renewable penetration grows.',
+      },
+    },
+    autoGrid: {
+      title: 'MATPOWER → Simulink Automation',
+      desc: 'Manually placing 193 buses and 407 lines takes days and risks human errors. AutoGrid ingests MATPOWER and emits a wired Simulink model — bus typing (Slack/PV/PQ), line routing, all automated.',
+      inputLabel: 'Input',
+      inputDesc: 'MATPOWER .m / .mat',
+      processLabel: 'AutoGrid',
+      processDesc: 'Parser · Topology Builder · Block Placer',
+      outputLabel: 'Output',
+      outputDesc: 'Simulink Model (EMT / RMS)',
+      humanError: 'Human Error',
+      vpError: 'V/P Error',
+      timeSaved: 'Time Saved',
+      timeSavedValue: 'Days → Minutes',
+    },
+    coSimTypes: {
+      intro: 'Boundary data exchanged via ITM (Ideal Transformer Model). Three combinations based on the solver type of each partition.',
+      itm: 'ITM interface — one side sends voltage (potential), the other returns current (flow)',
+      emtEmt: {
+        name: 'EMT-EMT',
+        partition: 'Both sides EMT',
+        interface: 'Instantaneous waveforms (V, I) — no translation needed',
+        case: 'Verified on 33-bus / 2 cores — bus voltages match single-system result',
+      },
+      rmsRms: {
+        name: 'RMS-RMS',
+        partition: 'Both sides RMS',
+        interface: 'Phasors (|V|∠θ, |I|∠θ) — no translation needed',
+        case: 'Verified on IEEE 15-bus / 3 cores — voltage, phase, and flow match',
+      },
+      rmsEmt: {
+        name: 'RMS-EMT',
+        partition: 'Mixed (this work)',
+        interface: 'EMT→RMS via Fourier transform; RMS→EMT via waveform synthesis',
+        case: 'Verified on IEEE 18-bus / 2 cores → applied to KPG-193',
+        thisWork: 'This Work',
+      },
+      partitionLabel: 'Partition',
+      interfaceLabel: 'Interface',
+      caseLabel: 'Validation',
     },
     emt: {
       title: 'EMT',
