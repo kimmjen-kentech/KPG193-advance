@@ -236,9 +236,9 @@ export interface ProfileRenewablesRow {
   hydro: number;
 }
 
-export const commitmentByFuelSQL = (day: number) => `
+export const commitmentByFuelSQL = (day: number, busId: number | null = null) => `
   WITH gen AS (
-    SELECT ROW_NUMBER() OVER ()::INTEGER AS generator_id, fuel, Pmax::DOUBLE AS pmax
+    SELECT ROW_NUMBER() OVER ()::INTEGER AS generator_id, fuel, Pmax::DOUBLE AS pmax, bus::INTEGER AS bus_id
     FROM '${u('generators')}'
   )
   SELECT
@@ -248,7 +248,7 @@ export const commitmentByFuelSQL = (day: number) => `
     SUM(g.pmax) FILTER (WHERE c.status = 1)::DOUBLE AS capacity_on_mw
   FROM '${u('profile_commitment')}' c
   JOIN gen g ON c.generator_id = g.generator_id
-  WHERE c.day = ${day}
+  WHERE c.day = ${day}${busId !== null ? ` AND g.bus_id = ${busId}` : ''}
   GROUP BY c.hour, g.fuel
   ORDER BY c.hour, g.fuel
 `;
