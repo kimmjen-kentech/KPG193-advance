@@ -4,6 +4,7 @@ import { useI18n } from '../hooks/useI18n';
 import { ModelingSection } from '../components/simulation/ModelingSection';
 import { AutoGridSection } from '../components/simulation/AutoGridSection';
 import { CoSimTypesSection } from '../components/simulation/CoSimTypesSection';
+import { ScenarioSection } from '../components/simulation/ScenarioSection';
 
 // Frequency response — 270 MW trip (1.5% of 17,600 MW), t=20s
 // ROCOF 0.18 Hz/s → nadir 59.64 Hz at t=22s → governor recovery to 59.98 Hz
@@ -237,9 +238,12 @@ export const SimulationPage = () => {
       {/* Section 04: Co-simulation 3 types */}
       <CoSimTypesSection number="04" />
 
-      {/* Section 05: Frequency Response */}
+      {/* Section 05: Scenario comparison (trip size sensitivity) */}
+      <ScenarioSection number="05" />
+
+      {/* Section 06: Frequency Response (baseline scenario) */}
       <section className="space-y-6">
-        <SectionHeader number="05" title={s.sections.freqResponse} />
+        <SectionHeader number="06" title={s.sections.freqResponse} />
         <div className="border border-border bg-bg-elev p-4 sm:p-6">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg">
@@ -279,9 +283,9 @@ export const SimulationPage = () => {
         </div>
       </section>
 
-      {/* Section 06: Voltage Response */}
+      {/* Section 07: Voltage Response */}
       <section className="space-y-6">
-        <SectionHeader number="06" title={s.sections.voltageResponse} />
+        <SectionHeader number="07" title={s.sections.voltageResponse} />
         <div className="border border-border bg-bg-elev p-4 sm:p-6">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg">
@@ -316,9 +320,9 @@ export const SimulationPage = () => {
         </div>
       </section>
 
-      {/* Section 07: Architecture */}
+      {/* Section 08: Architecture */}
       <section className="space-y-6">
-        <SectionHeader number="07" title={s.sections.architecture} />
+        <SectionHeader number="08" title={s.sections.architecture} />
         <div className="space-y-3">
           <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-fg">
             {s.archTitle}
@@ -332,9 +336,9 @@ export const SimulationPage = () => {
         </div>
       </section>
 
-      {/* Section 08: Results */}
+      {/* Section 09: Results */}
       <section className="space-y-6">
-        <SectionHeader number="08" title={s.sections.results} />
+        <SectionHeader number="09" title={s.sections.results} />
         <div className="grid grid-cols-2 gap-px border border-border bg-border sm:grid-cols-3 lg:grid-cols-6">
           {KPI_DATA.map(({ key, value, unit }) => (
             <div key={key} className="bg-bg-elev p-4">

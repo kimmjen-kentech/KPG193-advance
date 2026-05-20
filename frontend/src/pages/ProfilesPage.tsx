@@ -20,6 +20,7 @@ import { formatByMode } from '../utils/decimal';
 import { Skeleton } from '../components/ui/Skeleton';
 import { useI18n } from '../hooks/useI18n';
 import { useDecimal } from '../hooks/useDecimal';
+import { AnnualSection } from '../components/simulation/AnnualSection';
 
 const dayToDate = (day: number): string => {
   const d = new Date(2022, 0, 1);
@@ -113,6 +114,9 @@ export const ProfilesPage = () => {
           {t.profiles.tagline}
         </p>
       </header>
+
+      {/* Annual overview — 365일 일별 집계 (앞단에 배치하여 큰 패턴 먼저 보기) */}
+      <AnnualSection number="00" />
 
       <section className="grid items-stretch gap-3 lg:grid-cols-[320px_1fr]">
         <div className="border border-border bg-bg-elev p-5">
