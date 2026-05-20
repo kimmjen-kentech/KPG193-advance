@@ -253,6 +253,7 @@ export const SimulationPage = () => {
               ]}
               yMin={59.5}
               yMax={60.1}
+              xTicks={[0, 10, 20, 30, 40, 50, 60]}
               xLabel={(x) => `${x}s`}
               yLabel={(y) => `${y.toFixed(2)}`}
             />
@@ -291,6 +292,7 @@ export const SimulationPage = () => {
               ]}
               yMin={0.94}
               yMax={1.02}
+              xTicks={[0, 10, 20, 30, 40, 50, 60]}
               xLabel={(x) => `${x}s`}
               yLabel={(y) => y.toFixed(3)}
             />

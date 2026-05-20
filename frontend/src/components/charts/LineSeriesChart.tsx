@@ -12,6 +12,7 @@ interface LineSeriesChartProps {
   yLabel?: (y: number) => string;
   yMax?: number;
   yMin?: number;
+  xTicks?: number[];
   'aria-label'?: string;
 }
 
@@ -23,6 +24,7 @@ export const LineSeriesChart = ({
   yLabel,
   yMax: yMaxOverride,
   yMin: yMinOverride,
+  xTicks,
   'aria-label': ariaLabel,
 }: LineSeriesChartProps) => {
   const allPoints = series.flatMap((s) => s.points);
@@ -40,9 +42,9 @@ export const LineSeriesChart = ({
   const yMin = yMinOverride ?? 0;
 
   const sx = (x: number) =>
-    padding.left + ((x - xMin) / Math.max(xMax - xMin, 1)) * innerW;
+    padding.left + ((x - xMin) / Math.max(xMax - xMin, 1e-9)) * innerW;
   const sy = (y: number) =>
-    padding.top + innerH - ((y - yMin) / Math.max(yMax - yMin, 1)) * innerH;
+    padding.top + innerH - ((y - yMin) / Math.max(yMax - yMin, 1e-9)) * innerH;
 
   const yTicks = 4;
   const yTickValues = Array.from({ length: yTicks + 1 }, (_, i) =>
@@ -93,21 +95,21 @@ export const LineSeriesChart = ({
         );
       })}
 
-      {allPoints
-        .filter((_, i) => i % Math.ceil(allPoints.length / 8) === 0)
-        .map((d, i) => (
+      {(xTicks ?? Array.from({ length: 7 }, (_, i) => xMin + ((xMax - xMin) * i) / 6)).map(
+        (v, i) => (
           <text
             key={i}
-            x={sx(d.x)}
+            x={sx(v)}
             y={height - 8}
             textAnchor="middle"
             fontFamily="JetBrains Mono, monospace"
             fontSize="9"
             fill="var(--fg-subtle)"
           >
-            {xLabel ? xLabel(d.x) : d.x}
+            {xLabel ? xLabel(v) : v}
           </text>
-        ))}
+        ),
+      )}
     </svg>
   );
 };
