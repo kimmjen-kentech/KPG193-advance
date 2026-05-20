@@ -259,3 +259,20 @@ export interface CommitmentByFuelRow {
   units_on: number;
   capacity_on_mw: number;
 }
+
+export const profileWeatherSQL = (day: number, busId: number | null = null) => `
+  SELECT
+    hour::INTEGER AS hour,
+    (AVG(temperature_2m_K) - 273.15)::DOUBLE AS temp_c,
+    AVG("wind_speed_93m_m/s")::DOUBLE AS wind_speed
+  FROM '${u('profile_weather')}'
+  WHERE day = ${day}${busId !== null ? ` AND bus_id = ${busId}` : ''}
+  GROUP BY hour
+  ORDER BY hour
+`;
+
+export interface ProfileWeatherRow {
+  hour: number;
+  temp_c: number;
+  wind_speed: number;
+}
