@@ -295,7 +295,7 @@ export const NetworkPage = () => {
     hoveredLayerId === 'generators' ? (hoveredObj as NetworkGenerator | undefined) : undefined;
 
   return (
-    <div className="-mx-4 -my-8 h-[calc(100vh-65px)] sm:-mx-6 lg:-mx-8">
+    <div className="-mx-4 -my-8 h-[calc(100dvh-65px)] sm:-mx-6 lg:-mx-8">
       <div className="relative flex h-full flex-col border-t border-border lg:flex-row">
         <div className="relative flex-1 bg-bg-subtle">
           <DeckGL
