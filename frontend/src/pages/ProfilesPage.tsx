@@ -270,6 +270,7 @@ export const ProfilesPage = () => {
           {demand.data && (
             <AreaChart
               data={demandPoints}
+              xTicks={[1, 4, 8, 12, 16, 20, 24]}
               xLabel={(x) => `${x}h`}
               yLabel={(y) => `${(y / 1000).toFixed(0)}k`}
               highlightX={peak?.hour ?? null}

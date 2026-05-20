@@ -11,6 +11,7 @@ interface AreaChartProps {
   fillOpacity?: number;
   xLabel?: (x: number) => string;
   yLabel?: (y: number) => string;
+  xTicks?: number[];
   highlightX?: number | null;
   'aria-label'?: string;
 }
@@ -23,6 +24,7 @@ export const AreaChart = ({
   fillOpacity = 0.15,
   xLabel,
   yLabel,
+  xTicks,
   highlightX = null,
   'aria-label': ariaLabel,
 }: AreaChartProps) => {
@@ -54,8 +56,10 @@ export const AreaChart = ({
     yMin + ((yMax - yMin) * i) / yTicks,
   );
 
+  const renderedXTicks = xTicks ?? data.filter((_, i) => i % Math.ceil(data.length / 8) === 0 || i === data.length - 1).map((d) => d.x);
+
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="h-full w-full" role="img" aria-label={ariaLabel}>
+    <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" className="h-full w-full" role="img" aria-label={ariaLabel}>
       {yTickValues.map((v, i) => (
         <g key={i}>
           <line
@@ -85,22 +89,19 @@ export const AreaChart = ({
       <path d={areaPath} fill={color} fillOpacity={fillOpacity} />
       <path d={linePath} stroke={color} strokeWidth="1.4" fill="none" />
 
-      {data.map((d, i) => {
-        if (i % Math.ceil(data.length / 8) !== 0 && i !== data.length - 1) return null;
-        return (
-          <text
-            key={i}
-            x={sx(d.x)}
-            y={height - 8}
-            textAnchor="middle"
-            fontFamily="JetBrains Mono, monospace"
-            fontSize="9"
-            fill="var(--fg-subtle)"
-          >
-            {xLabel ? xLabel(d.x) : d.x}
-          </text>
-        );
-      })}
+      {renderedXTicks.map((v, i) => (
+        <text
+          key={i}
+          x={sx(v)}
+          y={height - 8}
+          textAnchor="middle"
+          fontFamily="JetBrains Mono, monospace"
+          fontSize="9"
+          fill="var(--fg-subtle)"
+        >
+          {xLabel ? xLabel(v) : v}
+        </text>
+      ))}
 
       {highlightX !== null && (
         <g>
