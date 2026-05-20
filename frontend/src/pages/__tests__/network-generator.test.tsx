@@ -44,7 +44,7 @@ const renderBusDetail = async (
   thermalGens: NetworkGenerator[],
   busGenMix: NetworkBusGenMix | null,
 ) => {
-  const { BusDetail } = await import('../NetworkPage');
+  const { BusDetail } = await import('../../components/network/BusDetail');
   const bus = mkBus(1);
   const busMap = new Map([[1, bus]]);
   return render(
