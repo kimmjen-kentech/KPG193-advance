@@ -63,6 +63,7 @@ export const LineSeriesChart = ({
   return (
     <svg
       viewBox={`0 0 ${width} ${height}`}
+      preserveAspectRatio="none"
       className="h-full w-full"
       role="img"
       aria-label={ariaLabel}
