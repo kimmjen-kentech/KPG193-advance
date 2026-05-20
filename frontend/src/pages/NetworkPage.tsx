@@ -388,6 +388,8 @@ export const NetworkPage = () => {
                   {(['off', 'base', 'icons', 'pie'] as const).map((mode) => (
                     <button
                       key={mode}
+                      aria-label={`Generator view: ${mode}`}
+                      aria-pressed={genView === mode}
                       onClick={() => setGenView(mode)}
                       className={cn(
                         'flex-1 border px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.15em] transition-colors',
