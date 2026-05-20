@@ -27,9 +27,9 @@ describe('AreaChart', () => {
     expect(texts.some((t) => t?.endsWith('h'))).toBe(true);
   });
 
-  it('SVG에 preserveAspectRatio=none이 설정된다', () => {
+  it('SVG에 viewBox가 설정된다', () => {
     const { container } = render(<AreaChart data={hourData} />);
     const svg = container.querySelector('svg')!;
-    expect(svg.getAttribute('preserveAspectRatio')).toBe('none');
+    expect(svg.getAttribute('viewBox')).toBeTruthy();
   });
 });

@@ -59,7 +59,7 @@ export const AreaChart = ({
   const renderedXTicks = xTicks ?? data.filter((_, i) => i % Math.ceil(data.length / 8) === 0 || i === data.length - 1).map((d) => d.x);
 
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" className="h-full w-full" role="img" aria-label={ariaLabel}>
+    <svg viewBox={`0 0 ${width} ${height}`} className="h-full w-full" role="img" aria-label={ariaLabel}>
       {yTickValues.map((v, i) => (
         <g key={i}>
           <line
