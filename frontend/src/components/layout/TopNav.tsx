@@ -19,7 +19,7 @@ const GithubIcon = ({ size = 14 }: { size?: number }) => (
   </svg>
 );
 
-const NAV_KEYS: ReadonlyArray<{ to: string; key: 'index' | 'network' | 'profiles' | 'data' | 'methodology' | 'guide' | 'simulation'; end?: boolean }> = [
+const NAV_KEYS: ReadonlyArray<{ to: string; key: 'index' | 'network' | 'profiles' | 'data' | 'methodology' | 'guide' | 'simulation' | 'applications'; end?: boolean }> = [
   { to: '/', key: 'index', end: true },
   { to: '/network', key: 'network' },
   { to: '/profiles', key: 'profiles' },
@@ -27,6 +27,7 @@ const NAV_KEYS: ReadonlyArray<{ to: string; key: 'index' | 'network' | 'profiles
   { to: '/methodology', key: 'methodology' },
   { to: '/guide', key: 'guide' },
   { to: '/simulation', key: 'simulation' },
+  { to: '/applications', key: 'applications' },
 ];
 
 export const TopNav = () => {
