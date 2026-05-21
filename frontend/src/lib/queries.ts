@@ -324,3 +324,99 @@ export interface ProfileWeatherRow {
   temp_c: number;
   wind_speed: number;
 }
+
+// ============================================================
+// Applications page — decarbonization study queries
+// ============================================================
+
+/**
+ * Card 02 — system-wide hourly renewable MW for a given day.
+ * Σ_bus (Pmax × profile_ratio) per hour, broken down by source.
+ */
+export const applicationsRenewablePotentialSQL = (day: number) => `
+  WITH cap AS (
+    SELECT bus_ID::INTEGER AS bus_id, 'solar' AS fuel, "Pmax [MW]"::DOUBLE AS pmax FROM '${u('capacity_solar')}'
+    UNION ALL
+    SELECT bus_ID::INTEGER, 'wind',  "Pmax [MW]"::DOUBLE FROM '${u('capacity_wind')}'
+    UNION ALL
+    SELECT bus_ID::INTEGER, 'hydro', "Pmax [MW]"::DOUBLE FROM '${u('capacity_hydro')}'
+  )
+  SELECT
+    p.hour::INTEGER AS hour,
+    SUM(CASE WHEN cap.fuel='solar' THEN cap.pmax * p.pv_profile_ratio    ELSE 0 END)::DOUBLE AS solar_mw,
+    SUM(CASE WHEN cap.fuel='wind'  THEN cap.pmax * p.wind_profile_ratio  ELSE 0 END)::DOUBLE AS wind_mw,
+    SUM(CASE WHEN cap.fuel='hydro' THEN cap.pmax * p.hydro_profile_ratio ELSE 0 END)::DOUBLE AS hydro_mw
+  FROM '${u('profile_renewables')}' p
+  JOIN cap ON p.bus_id = cap.bus_id
+  WHERE p.day = ${day}
+  GROUP BY p.hour
+  ORDER BY p.hour
+`;
+
+export interface ApplicationsRenewablePotentialRow {
+  hour: number;
+  solar_mw: number;
+  wind_mw: number;
+  hydro_mw: number;
+}
+
+/**
+ * Card 03 — net load (demand − renewable potential) per hour.
+ * CTE composes RE potential and demand, then subtracts.
+ */
+export const applicationsNetLoadSQL = (day: number) => `
+  WITH cap AS (
+    SELECT bus_ID::INTEGER AS bus_id, 'solar' AS fuel, "Pmax [MW]"::DOUBLE AS pmax FROM '${u('capacity_solar')}'
+    UNION ALL
+    SELECT bus_ID::INTEGER, 'wind',  "Pmax [MW]"::DOUBLE FROM '${u('capacity_wind')}'
+    UNION ALL
+    SELECT bus_ID::INTEGER, 'hydro', "Pmax [MW]"::DOUBLE FROM '${u('capacity_hydro')}'
+  ),
+  re AS (
+    SELECT p.hour::INTEGER AS hour,
+      (SUM(CASE WHEN cap.fuel='solar' THEN cap.pmax * p.pv_profile_ratio    ELSE 0 END)
+      + SUM(CASE WHEN cap.fuel='wind'  THEN cap.pmax * p.wind_profile_ratio  ELSE 0 END)
+      + SUM(CASE WHEN cap.fuel='hydro' THEN cap.pmax * p.hydro_profile_ratio ELSE 0 END))::DOUBLE AS re_mw
+    FROM '${u('profile_renewables')}' p JOIN cap ON p.bus_id = cap.bus_id
+    WHERE p.day = ${day} GROUP BY p.hour
+  ),
+  dem AS (
+    SELECT hour::INTEGER AS hour, SUM(demandP)::DOUBLE AS demand_mw
+    FROM '${u('profile_demand')}' WHERE day = ${day} GROUP BY hour
+  )
+  SELECT dem.hour, dem.demand_mw, COALESCE(re.re_mw, 0)::DOUBLE AS re_mw,
+    (dem.demand_mw - COALESCE(re.re_mw, 0))::DOUBLE AS net_mw
+  FROM dem LEFT JOIN re USING (hour)
+  ORDER BY dem.hour
+`;
+
+export interface ApplicationsNetLoadRow {
+  hour: number;
+  demand_mw: number;
+  re_mw: number;
+  net_mw: number;
+}
+
+/**
+ * Card 06 — annual capacity factor per thermal fuel.
+ * Uses commitment status × Pmax as actual energy (UPPER BOUND, see caption).
+ */
+export const applicationsThermalCFSQL = `
+  WITH gen AS (
+    SELECT ROW_NUMBER() OVER ()::INTEGER AS generator_id, fuel, Pmax::DOUBLE AS pmax
+    FROM '${u('generators')}'
+  )
+  SELECT
+    g.fuel,
+    SUM(g.pmax * c.status)::DOUBLE   AS energy_mwh,
+    (SUM(g.pmax) * 8760)::DOUBLE     AS theoretical_mwh
+  FROM '${u('profile_commitment')}' c
+  JOIN gen g ON c.generator_id = g.generator_id
+  GROUP BY g.fuel
+`;
+
+export interface ApplicationsThermalCFRow {
+  fuel: 'coal' | 'lng' | 'nuclear';
+  energy_mwh: number;
+  theoretical_mwh: number;
+}

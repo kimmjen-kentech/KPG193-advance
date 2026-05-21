@@ -9,6 +9,7 @@ export interface Translation {
     methodology: string;
     guide: string;
     simulation: string;
+    applications: string;
   };
   pin: {
     title: string;
@@ -265,6 +266,60 @@ export interface Translation {
     };
     resultsCaption: string;
   };
+  applications: {
+    label: string;
+    title: string;
+    tagline: string;
+    sections: {
+      decarbIndex: string;
+      renewablePotential: string;
+      netLoad: string;
+      coalPhaseout: string;
+      renewableExpansion: string;
+      capacityFactor: string;
+    };
+    decarb: {
+      caption: string;
+      renewableShareLabel: string;
+      cleanShareLabel: string;
+      renewableLabel: string;
+      cleanLabel: string;
+      fossilLabel: string;
+    };
+    potential: {
+      caption: string;
+      daySelector: string;
+      peakMw: string;
+      dailyEnergy: string;
+    };
+    netLoad: {
+      caption: string;
+      peakNet: string;
+      spread: string;
+      demandLabel: string;
+      netLabel: string;
+    };
+    phaseout: {
+      sliderLabel: string;
+      remainingFirm: string;
+      co2Avoided: string;
+      estimationBadge: string;
+      sourceFootnote: string;
+      caption: string;
+    };
+    expansion: {
+      sliderLabel: string;
+      projectedShare: string;
+      deltaTwh: string;
+      caption: string;
+    };
+    cf: {
+      highest: string;
+      lowest: string;
+      caption: string;
+      upperBoundNote: string;
+    };
+  };
 }
 
 const ko: Translation = {
@@ -276,6 +331,7 @@ const ko: Translation = {
     methodology: '방법론',
     guide: '가이드',
     simulation: '시뮬레이션',
+    applications: '응용',
   },
   pin: {
     title: '접근 제한',
@@ -559,6 +615,60 @@ const ko: Translation = {
     },
     resultsCaption: 'KPG-193 전체 계통 SPEEDGOAT 실시간 시뮬레이션 검증 결과 (2026-05-19)',
   },
+  applications: {
+    label: 'Decarbonization_Applications',
+    title: '응용.',
+    tagline: 'KPG-193 데이터셋이 탈탄소화 연구에 어떻게 활용될 수 있는지 — 발전 믹스 분석, 시나리오 모델링, 시간별 잠재량 평가까지.',
+    sections: {
+      decarbIndex: '탈탄소화 지표',
+      renewablePotential: '시간별 재생에너지 잠재량',
+      netLoad: '순부하 듀크 커브',
+      coalPhaseout: '석탄 폐지 시나리오',
+      renewableExpansion: '재생에너지 확장',
+      capacityFactor: '연간 용량계수',
+    },
+    decarb: {
+      caption: '재생에너지 = 태양광·풍력·수력 / 무탄소 = 재생에너지 + 원자력 / 화석 = 석탄 + LNG.',
+      renewableShareLabel: '재생에너지 비율',
+      cleanShareLabel: '무탄소 비율',
+      renewableLabel: '재생에너지',
+      cleanLabel: '무탄소',
+      fossilLabel: '화석',
+    },
+    potential: {
+      caption: 'capacity × profile_ratio. 시스템 전체 합산. 일자별로 솔라/풍력/수력의 시간별 발전 가능량.',
+      daySelector: '일자',
+      peakMw: '피크 잠재량',
+      dailyEnergy: '일일 에너지',
+    },
+    netLoad: {
+      caption: '순부하 = 수요 − 재생에너지 발전 잠재량. 정오 일사량 피크와 야간 수요 피크 사이의 \'덕 커브\' 패턴.',
+      peakNet: '순부하 피크',
+      spread: '피크-저점 격차',
+      demandLabel: '수요',
+      netLabel: '순부하',
+    },
+    phaseout: {
+      sliderLabel: '석탄 폐지율',
+      remainingFirm: '잔여 firm 용량',
+      co2Avoided: '연간 CO₂ 회피',
+      estimationBadge: '추정',
+      sourceFootnote: '배출 계수: IEA Emissions Factors 2023 (coal 0.82, LNG 0.49, nuclear 0 tCO₂/MWh). 가동률 0.6 가정.',
+      caption: '석탄 발전 비중을 단계적으로 줄였을 때 잔여 firm 용량과 CO₂ 회피량. 가동률·배출계수는 illustrative.',
+    },
+    expansion: {
+      sliderLabel: '재생에너지 배수',
+      projectedShare: '예상 재생에너지 비율',
+      deltaTwh: '추가 연간 에너지',
+      caption: '현재 재생에너지 용량을 N배 확장했을 때의 연간 에너지 산출량 (일별 CF 365일 누적 × 24h).',
+    },
+    cf: {
+      highest: '최고 CF',
+      lowest: '최저 CF',
+      caption: '연간 실제 에너지 ÷ 이론 최대 (capacity × 8760h). 화력은 commitment status × Pmax 기준 상한선.',
+      upperBoundNote: '화력 CF는 commitment 기반 상한선 (status × Pmax). 실제 dispatch level은 미반영.',
+    },
+  },
 };
 
 const en: Translation = {
@@ -570,6 +680,7 @@ const en: Translation = {
     methodology: 'Methodology',
     guide: 'Guide',
     simulation: 'Simulation',
+    applications: 'Applications',
   },
   pin: {
     title: 'Private Preview',
@@ -859,6 +970,60 @@ const en: Translation = {
       recovery: 'Recovery Time',
     },
     resultsCaption: 'KPG-193 full-system SPEEDGOAT real-time simulation validation (2026-05-19)',
+  },
+  applications: {
+    label: 'Decarbonization_Applications',
+    title: 'Applications.',
+    tagline: 'How the KPG-193 dataset enables decarbonization research — generation mix analysis, scenario modelling, and hourly potential assessment.',
+    sections: {
+      decarbIndex: 'Decarbonization Index',
+      renewablePotential: 'Renewable Hourly Potential',
+      netLoad: 'Net Load Duck Curve',
+      coalPhaseout: 'Coal Phaseout Scenario',
+      renewableExpansion: 'Renewable Expansion',
+      capacityFactor: 'Annual Capacity Factor',
+    },
+    decarb: {
+      caption: 'Renewable = solar + wind + hydro. Clean = renewable + nuclear. Fossil = coal + LNG.',
+      renewableShareLabel: 'Renewable share',
+      cleanShareLabel: 'Clean share',
+      renewableLabel: 'Renewable',
+      cleanLabel: 'Clean',
+      fossilLabel: 'Fossil',
+    },
+    potential: {
+      caption: 'capacity × profile_ratio summed system-wide. Per-day hourly generation potential by source.',
+      daySelector: 'Day',
+      peakMw: 'Peak potential',
+      dailyEnergy: 'Daily energy',
+    },
+    netLoad: {
+      caption: 'Net load = demand − renewable potential. The "duck curve" — solar peak at noon vs. evening demand peak.',
+      peakNet: 'Net-load peak',
+      spread: 'Peak-to-valley spread',
+      demandLabel: 'Demand',
+      netLabel: 'Net load',
+    },
+    phaseout: {
+      sliderLabel: 'Coal phaseout',
+      remainingFirm: 'Remaining firm capacity',
+      co2Avoided: 'Annual CO₂ avoided',
+      estimationBadge: 'estimation',
+      sourceFootnote: 'Emission factors: IEA Emissions Factors 2023 (coal 0.82, LNG 0.49, nuclear 0 tCO₂/MWh). Capacity factor 0.6 assumed.',
+      caption: 'Phasing out coal generation — remaining firm capacity and avoided CO₂. Capacity factor and emission factors are illustrative.',
+    },
+    expansion: {
+      sliderLabel: 'Renewable multiplier',
+      projectedShare: 'Projected RE share',
+      deltaTwh: 'Additional annual energy',
+      caption: 'Annual energy yield if current renewable capacity is multiplied by N (sum over 365 days of CF × 24 h).',
+    },
+    cf: {
+      highest: 'Highest CF',
+      lowest: 'Lowest CF',
+      caption: 'Actual annual energy ÷ theoretical max (capacity × 8760 h). Thermal CF is an upper bound (commitment-based).',
+      upperBoundNote: 'Thermal CF is a commitment-based upper bound (status × Pmax). Actual dispatch level is not modelled.',
+    },
   },
 };
 

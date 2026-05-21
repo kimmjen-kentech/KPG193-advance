@@ -15,6 +15,9 @@ const NetworkPage = lazy(() =>
 const ProfilesPage = lazy(() =>
   import('./pages/ProfilesPage').then((m) => ({ default: m.ProfilesPage })),
 );
+const ApplicationsPage = lazy(() =>
+  import('./pages/ApplicationsPage').then((m) => ({ default: m.ApplicationsPage })),
+);
 
 const basename = import.meta.env.BASE_URL.replace(/\/$/, '');
 
@@ -52,6 +55,14 @@ export default function App() {
           <Route path="methodology" element={<MethodologyPage />} />
           <Route path="guide" element={<GuidePage />} />
           <Route path="simulation" element={<SimulationPage />} />
+          <Route
+            path="applications"
+            element={
+              <Suspense fallback={<LazyFallback />}>
+                <ApplicationsPage />
+              </Suspense>
+            }
+          />
         </Route>
       </Routes>
     </BrowserRouter>
